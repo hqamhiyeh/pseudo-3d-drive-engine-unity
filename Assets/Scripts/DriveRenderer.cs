@@ -1,6 +1,9 @@
+using Assets.Scripts;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Security;
 using System.Security.Cryptography;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -9,175 +12,139 @@ using UnityEngine.U2D;
 
 public class DriveRenderer : MonoBehaviour
 {
+    public Camera driveCamera;
     public GameObject driveScreen;
     public SpriteRenderer roadPlane;
 
     private RenderTexture   _renderTex;
     private RenderTexture   _saveActiveRenderTex;
     private Mesh            _mesh;
+    private MeshBuilder     _meshBuilder;
 
-    static Material lineMaterial;
+    public Material lineMaterial;
+    public Material material1;
+    public Material material2;
 
-    int segmentLength   = 200;          // number of lines per segment
-    int segmentCount    = 500;          // number of segments that make up the road
-    int roadLength;                     // number of lines that make up the road (calculated)
-    int roadWidth       = 2000;         // number of pixels wide the road is
-    int rumbleLength    = 3;            // number of segments per rumble strip
+    int segmentLength           = 200;          // number of lines per segment
+    int segmentCount            = 500;          // number of segments that make up the road
+    int roadLength;                             // number of lines that make up the road (calculated)
+    int roadWidth               = 2000;         // number of pixels wide the road is
+    int rumbleLength            = 3;            // number of segments per rumble strip
+    public int drawDistance     = 200;          // number of segments to draw
 
-    int canvasWidth     = 1920;         // width in pixels
-    int canvasHeight    = 1080;         // height in pixels
-    int PPU             = 100;          // pixels per unit
+    public int canvasWidth      = 1920;         // width in pixels
+    public int canvasHeight     = 1080;         // height in pixels
+    int pixelsPerUnit           = 100;          // pixels per unit
 
-    float fieldOfView   = 100;          // ingame camera field of view
-    float cameraDepth;                  // z distance camera is from screen (calculated)
+    float fieldOfView           = 100;          // ingame camera field of view
+    float cameraDepth;                          // z distance camera is from screen (calculated)
 
     Vector3 cameraPosition = new Vector3(0.0f, 1000.0f, 0.0f);
     Vector3 screenPosition;
     
-    Vector3[] newVertices;
-    Vector3[] newNormals;
-    Vector2[] newUVs;
-    int[] newTriangles;
-
-    private List<Segment> road = new List<Segment>();
-
-    private class Segment
-    {
-        public int index;
-        public Point p1;
-        public Point p2;
-        public Color color;
-
-        public Segment(int index)
-        {
-            this.index = index;
-        }
-
-        public Segment(int index, Point p1, Point p2, Color color)
-        {
-            this.index = index;
-            this.p1 = p1;
-            this.p2 = p2;
-            this.color = color;
-        }
-    }
-
-    private class Point
-    {
-        public Vector3 world;
-        public Vector3 camera;
-        public Vector2 screen;
-        public float screenScale;
-        public float screenWidth;
-
-        public Point(Vector3 world, Vector3 camera, Vector3 screen)
-        {
-            this.world = world;
-            this.camera = camera;
-            this.screen = screen;
-        }
-    }
+    private List<Segment> _road = new List<Segment>();
+    private List<Segment> _roadSection = new List<Segment>();
 
     // Awake is called when the script instance is being loaded
     void Awake()
     {
+        Application.targetFrameRate = -1;
+
         Texture2D roadPlaneTex = new Texture2D(canvasWidth, canvasHeight, TextureFormat.RGBA32, false);
         roadPlaneTex.filterMode = FilterMode.Point;
-        Sprite roadPlaneSprite = Sprite.Create(roadPlaneTex, new Rect(0, 0, canvasWidth, canvasHeight), new Vector2(0.5f, 0.5f), 100);
+        Sprite roadPlaneSprite = Sprite.Create(roadPlaneTex, new Rect(0, 0, canvasWidth, canvasHeight), new Vector2(0.5f, 0.5f), pixelsPerUnit);
         roadPlaneSprite.name = "roadPlaneSprite";
         roadPlane.sprite = roadPlaneSprite;
 
+        driveCamera.orthographicSize = ((float)canvasHeight / (float)pixelsPerUnit) / 2.0f;
+
         cameraDepth = (float) (1 / Math.Tan((fieldOfView / 2) * Math.PI / 180));
         screenPosition = driveScreen.transform.position;
+
+        _mesh = new Mesh();
+        _mesh.indexFormat = IndexFormat.UInt16;
+
+        _meshBuilder = new MeshBuilder();
     }
 
     // Start is called before the first frame update
     void Start()
     {
         GenerateRoad();
-        CalculateProjection();
-        CreateMesh();
+    }
+
+    // FixedUpdate is called every fixed framerate frame
+    private void FixedUpdate()
+    {
+        
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetKey("w"))
+        {
+            cameraPosition.z = cameraPosition.z + 2;
+        }
+
+        GenerateMesh();
     }
 
+    // OnRenderObject is called after camera has rendered the scene
     private void OnRenderObject()
     {
-        RenderRoad();
+        Draw();
     }
 
     void GenerateRoad()
     {
-        road.Clear();
+        _road.Clear();
         
+        //for (int i = 0; i < segmentCount; i++)
+        //    road.Add(new Segment(i, new Point(new Vector3(0.0f, 0.0f, (i+1)*segmentLength), new Vector3(), new Vector3()), new Point(new Vector3(0.0f, 0.0f, (i+2) * segmentLength), new Vector3(), new Vector3()), (Convert.ToBoolean(Math.Floor((double)(i/rumbleLength)%2))) ? Color.red : Color.white));
+
+        List<Point> points = new List<Point>();
+        for (int i = 0; i <= segmentCount; i++)
+        {
+            points.Add(new Point(new Vector3(0.0f, 0.0f, (i + 1) * segmentLength)));
+        }
+
         for (int i = 0; i < segmentCount; i++)
         {
-            road.Add(new Segment(i, new Point(new Vector3(0.0f, 0.0f, (i+1)*segmentLength), new Vector3(), new Vector3()), new Point(new Vector3(0.0f, 0.0f, (i+2) * segmentLength), new Vector3(), new Vector3()), (Convert.ToBoolean(Math.Floor((double)(i/rumbleLength)%2))) ? Color.red : Color.white));
+            _road.Add(new Segment(i, points[i], points[i+1], (Convert.ToBoolean(Math.Floor((double)(i / rumbleLength) % 2))) ? Color.red : Color.white));
         }
     }
 
-    void CalculateProjection()
+    void ProjectAll()
     {
-        foreach (Segment segment in road)
+        Point segmentPoint;
+        for(int i=0; i <= segmentCount; i++)
         {
-            segment.p1.camera.x = (segment.p1.world.x) - cameraPosition.x;
-            segment.p1.camera.y = (segment.p1.world.y) - cameraPosition.y;
-            segment.p1.camera.z = (segment.p1.world.z) - cameraPosition.z;
-            segment.p1.screenScale = cameraDepth / segment.p1.camera.z;
-            segment.p1.screen.x =       (float)Math.Round((canvasWidth / 2)     +   (segment.p1.screenScale * segment.p1.camera.x   * canvasWidth / 2));
-            segment.p1.screen.y =       (float)Math.Round((canvasHeight / 2)    -   (segment.p1.screenScale * segment.p1.camera.y   * canvasHeight / 2));
-            segment.p1.screenWidth =    (float)Math.Round(                          (segment.p1.screenScale * roadWidth             * canvasWidth / 2));
+            if (i != segmentCount)
+                segmentPoint = _road[i].p1;
+            else
+                segmentPoint = _road[i-1].p2;
 
-            segment.p2.camera.x = (segment.p2.world.x) - cameraPosition.x;
-            segment.p2.camera.z = (segment.p2.world.z) - cameraPosition.z;
-            segment.p2.camera.y = (segment.p2.world.y) - cameraPosition.y;
-            segment.p2.screenScale = cameraDepth / segment.p2.camera.z;
-            segment.p2.screen.x =       (float)Math.Round((canvasWidth / 2)     +   (segment.p2.screenScale * segment.p2.camera.x   * canvasWidth / 2));
-            segment.p2.screen.y =       (float)Math.Round((canvasHeight / 2)    -   (segment.p2.screenScale * segment.p2.camera.y   * canvasHeight / 2));
-            segment.p2.screenWidth =    (float)Math.Round(                          (segment.p2.screenScale * roadWidth             * canvasWidth / 2));
+            Project(segmentPoint);
         }
     }
 
-    void CreateMesh()
+    void Project(Point point)
     {
-        _mesh = new Mesh();
-
-        newVertices = new Vector3[2*segmentCount];
-        newNormals = new Vector3[2*segmentCount];
-        newUVs = new Vector2[2*segmentCount];
-        newTriangles = new int[3*(2*segmentCount)];
-
-        _mesh.indexFormat = IndexFormat.UInt16;
-
-        for (int i = 0, j = 0; i < segmentCount; i++, j += 2)
-        {
-            newVertices[j]      = new Vector3(((road[i].p1.screen.x - (road[i].p1.screenWidth / 2.0f)) / PPU) - ((canvasWidth / 2.0f) / PPU) + (screenPosition.x), ((canvasHeight - road[i].p1.screen.y - (canvasHeight / 2.0f)) / PPU) + screenPosition.y);
-            newVertices[j + 1]  = new Vector3(((road[i].p1.screen.x + (road[i].p1.screenWidth / 2.0f)) / PPU) - ((canvasWidth / 2.0f) / PPU) + (screenPosition.x), ((canvasHeight - road[i].p1.screen.y - (canvasHeight / 2.0f)) / PPU) + screenPosition.y);
-        }
-        _mesh.vertices = newVertices;
-
-        for (int i = 0; i < 2*segmentCount; i++)
-        {
-            newNormals[i] = Vector3.back;
-            newUVs[i] = new Vector2(_mesh.vertices[i].x, _mesh.vertices[i].z);
-        }
-        _mesh.normals = newNormals;
-        _mesh.uv = newUVs;
-
-        for (int i = 0, j = 0; i < (2*segmentCount) - 2; i++, j += 3)
-        {
-            newTriangles[j] = i;
-            newTriangles[j + 1] = i + 1;
-            newTriangles[j + 2] = i + 2;
-        }
-        _mesh.triangles = newTriangles;
+        point.camera.x = (point.world.x) - cameraPosition.x;
+        point.camera.y = (point.world.y) - cameraPosition.y;
+        point.camera.z = (point.world.z) - cameraPosition.z;
+        point.screenScale = cameraDepth / point.camera.z;
+        point.screen.x = (float)Math.Round((canvasWidth / 2) + (point.screenScale * point.camera.x * canvasWidth / 2));
+        point.screen.y = (float)Math.Round((canvasHeight / 2) - (point.screenScale * point.camera.y * canvasHeight / 2));
+        point.screenWidth = (float)Math.Round((point.screenScale * roadWidth * canvasWidth / 2));
+        point.transform.x = ((point.screen.x - ((float)canvasWidth / 2.0f)) / (float)pixelsPerUnit) + screenPosition.x;
+        point.transform.y = (((float)canvasHeight - point.screen.y - ((float)canvasHeight / 2.0f)) / (float)pixelsPerUnit) + screenPosition.y;
+        point.transform.z = screenPosition.z;
+        point.transformWidth = point.screenWidth / (float)pixelsPerUnit;
     }
 
-    static void CreateLineMaterial()
+    private void CreateLineMaterial()
     {
         if (!lineMaterial)
         {
@@ -195,13 +162,13 @@ public class DriveRenderer : MonoBehaviour
         }
     }
 
-    private void RenderRoad()
+    private void Draw()
     {
         _renderTex = RenderTexture.GetTemporary(canvasWidth, canvasHeight);
         _saveActiveRenderTex = RenderTexture.active;
         Graphics.SetRenderTarget(_renderTex);
         GL.Clear(false, true, new Color(0.2f, 0.3f, 0.3f, 1.0f));
-        CreateLineMaterial();
+        //CreateLineMaterial();
         lineMaterial.SetPass(0);
         GL.PushMatrix();
         Graphics.DrawMeshNow(_mesh, Matrix4x4.identity);
@@ -209,5 +176,54 @@ public class DriveRenderer : MonoBehaviour
         GL.PopMatrix();
         Graphics.SetRenderTarget(_saveActiveRenderTex);
         RenderTexture.ReleaseTemporary(_renderTex);
+    }
+
+    private void GenerateMesh()
+    {
+        _roadSection.Clear();
+        Segment baseSegment = _road[(int)Math.Floor(cameraPosition.z / segmentLength)];
+        Segment segment;
+        Point point;
+        Boolean addToMesh;
+        for (int n = 0, i; n <= drawDistance; n++)
+        {
+            i = baseSegment.index + n;
+            if (i != segmentCount)
+            {
+                segment = _road[i];
+                point = _road[i].p1;
+                addToMesh = true;
+            }
+            else
+            {
+                segment = _road[i - 1];
+                point = _road[i - 1].p2;
+                addToMesh = false;
+            }
+            
+            Project(point);
+
+            if (addToMesh == true)
+                _roadSection.Add(segment);
+        }
+
+        _mesh.Clear();
+        _meshBuilder.ResetOffset();
+        for (int i = 0; i < _roadSection.Count; i++)
+        {
+            _meshBuilder.AddVertex(_roadSection[i].p1.transform.x - (_roadSection[i].p1.transformWidth / 2.0f), _roadSection[i].p1.transform.y, _roadSection[i].p1.transform.z);
+            _meshBuilder.AddVertex(_roadSection[i].p1.transform.x + (_roadSection[i].p1.transformWidth / 2.0f), _roadSection[i].p1.transform.y, _roadSection[i].p1.transform.z);
+        }
+        for (int i = 0; i < 2 * _roadSection.Count; i++)
+        {
+            _meshBuilder.AddUV(_meshBuilder.GetVertex(i).x, _meshBuilder.GetVertex(i).z);
+            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
+        }
+        for (int i = 0; i < (2 * _roadSection.Count) - 2; i++)
+        {
+            _meshBuilder.AddTriangle(i, i + 1, i + 2);
+        }
+
+        _meshBuilder.ToMesh(_mesh);
     }
 }

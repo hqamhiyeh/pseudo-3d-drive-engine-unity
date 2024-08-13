@@ -151,8 +151,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3063d5b5832fe4742b221b342f644388, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  driveCamera: {fileID: 2017140180}
   driveScreen: {fileID: 2095561413}
   roadPlane: {fileID: 1593921113}
+  lineMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  material1: {fileID: 0}
+  material2: {fileID: 0}
+  drawDistance: 300
+  canvasWidth: 1920
+  canvasHeight: 1080
 --- !u!4 &1067725676
 Transform:
   m_ObjectHideFlags: 0
@@ -320,7 +327,7 @@ Camera:
     m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 1
+  m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
   m_AllowMSAA: 1
