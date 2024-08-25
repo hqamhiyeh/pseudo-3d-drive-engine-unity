@@ -253,14 +253,14 @@ MonoBehaviour:
   _roadPlaneSR: {fileID: 1593921113}
   _roadPlaneMR: {fileID: 289249920}
   _roadPlaneMF: {fileID: 0}
-  enableSpriteRenderer: 1
+  _enableSpriteRenderer: 1
   _viewportWidth: 1920
   _viewportHeight: 1080
   _pixelsPerUnit: 100
   _roadMaterialDark: {fileID: 2100000, guid: db7b8400b1a0d6f47a32ebc337873fb9, type: 2}
   _roadMaterialLight: {fileID: 2100000, guid: 9baf00811b407a14e8cb1ad830df4b5f, type: 2}
-  drawDistance: 300
-  fieldOfView: 100
+  _drawDistance: 200
+  _fieldOfView: 100
   _targetFrameRate: -1
 --- !u!4 &1067725676
 Transform:

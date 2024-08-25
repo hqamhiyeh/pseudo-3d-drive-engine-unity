@@ -1,15 +1,8 @@
 using Assets.Scripts;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Security;
-using System.Reflection;
-using System.Security.Cryptography;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.U2D;
 
 public class DriveRenderer : MonoBehaviour
 {
@@ -19,33 +12,28 @@ public class DriveRenderer : MonoBehaviour
     [SerializeField] private MeshRenderer   _roadPlaneMR;               // Road plane mesh renderer
     [SerializeField] private MeshFilter     _roadPlaneMF;               // Road plane mesh filter
 
-    [SerializeField] private Boolean _enableSpriteRenderer = false;     // True enables sprite renderer, disables mesh renderer. False for vice versa
+    [SerializeField] private Boolean _useSpriteRenderer = false;        // True enables sprite renderer, disables mesh renderer. False for vice versa
 
     [SerializeField] private int _viewportWidth     = 1920;             // width in pixels
     [SerializeField] private int _viewportHeight    = 1080;             // height in pixels
     [SerializeField] private int _pixelsPerUnit     = 100;              // pixels per unit
 
-    private List<Point> _points = new List<Point>();                    // All points on road
-    private List<Point> _sectionPoints = new List<Point>();
-    private List<Segment> _road = new List<Segment>();                  // The complete road to generate
-    private List<Segment> _roadSection = new List<Segment>();           // Section of road to display
-
-    private Mesh _mesh;                                                 // The mesh to render
-    private MeshBuilder _meshBuilder;                                   // To create meshes
+    private readonly List<RoadPoint> _road = new();                     // All road points
+    private Mesh _mesh;                                                 // The mesh to render, constantly changing.
+    private MeshBuilder _meshBuilder;                                   // Builder to create meshes
 
     [SerializeField] private Material _roadMaterialDark;                // Dark color for road mesh
     [SerializeField] private Material _roadMaterialLight;               // Light color for road mesh
-    private List<Material> materials = new List<Material>();            // Materials to apply to meshes
+    private List<Material> materials = new();                           // Materials to apply to meshes
 
-    private int _segmentLength      = 200;                              // number of lines per segment
-    private int _segmentCount       = 3000;                             // number of segments that make up the road
-    private int _roadLength;                                            // number of lines that make up the road (calculated)
-    private int _roadWidth          = 2000;                             // number of pixels wide the road is
-    private int _rumbleLength       = 3;                                // number of segments per rumble strip
+    private readonly int _segmentLength      = 200;                     // number of lines per segment
+    private readonly int _segmentCount       = 500;                     // number of segments that make up the road
+    private readonly int _roadWidth          = 2000;                    // number of pixels wide the road is
+    //private readonly int _rumbleLength       = 3;                       // number of segments per rumble strip
     [SerializeField]
     private int _drawDistance       = 200;                              // number of segments to draw
 
-    private Vector3 _cameraPosition = new Vector3(0.0f, 1000.0f, 0.0f); // POV camera position
+    private Vector3 _cameraPosition = new(0.0f, 1000.0f, 0.0f);         // POV camera position
     private Vector3 _screenPosition;                                    // Position of screen. Automatically set to position of screen object.
     [SerializeField]
     private float _fieldOfView      = 100;                              // ingame camera field of view
@@ -54,36 +42,38 @@ public class DriveRenderer : MonoBehaviour
     [SerializeField]
     private int _targetFrameRate    = -1;                               // Frame rate limit. -1 is unlimited.
 
-
     // Awake is called when the script instance is being loaded
     void Awake()
     {
+        // Set app frame rate
         Application.targetFrameRate = _targetFrameRate;
 
-        Texture2D roadPlaneTexture;
-        roadPlaneTexture = new Texture2D(_viewportWidth, _viewportHeight, TextureFormat.RGBA32, false);
-        roadPlaneTexture.filterMode = FilterMode.Point;
-        
-        Sprite roadPlaneSprite;
-        roadPlaneSprite = Sprite.Create(roadPlaneTexture, new Rect(0, 0, _viewportWidth, _viewportHeight), new Vector2(0.5f, 0.5f), _pixelsPerUnit);
-        roadPlaneSprite.name = "roadPlaneSprite";
-        _roadPlaneSR.sprite = roadPlaneSprite;
-
-        _driveCamera.orthographicSize = (float)_viewportHeight / (float)_pixelsPerUnit / 2.0f;
+        // Set Drive scene objects positions and camera 
         _screenPosition = _driveScreen.transform.position;
-        _cameraDistanceZ = (float) (1 / Math.Tan((_fieldOfView / 2) * Math.PI / 180));
+        _driveCamera.transform.position.Set(_screenPosition.x, _screenPosition.y, _screenPosition.z - 1);
+        _driveCamera.orthographicSize = (float)_viewportHeight / (float)_pixelsPerUnit / 2.0f;
 
-        _mesh = new Mesh();
-        _mesh.indexFormat = IndexFormat.UInt16;
+        // Create and set road plane sprite for sprite renderer
+        Texture2D   roadPlaneTexture    = new(_viewportWidth, _viewportHeight, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+        Sprite      roadPlaneSprite     = Sprite.Create(roadPlaneTexture, new Rect(0, 0, _viewportWidth, _viewportHeight), new Vector2(0.5f, 0.5f), _pixelsPerUnit);
+        roadPlaneSprite.name = "Road Plane Sprite";
+        _roadPlaneSR.sprite = roadPlaneSprite;
+        
+        // Set pov camera distance (normalized) from viewport
+        _cameraDistanceZ = (float)(1 / Math.Tan((_fieldOfView / 2) * Math.PI / 180));
+
+        // Initialize empty mesh & builder
+        _mesh = new Mesh() { indexFormat = IndexFormat.UInt16 };
         _meshBuilder = new MeshBuilder(2);
 
+        // Set up road mesh renderer
         _roadPlaneMR = _driveScreen.GetComponentInChildren<MeshRenderer>();
         _roadPlaneMF = _driveScreen.GetComponentInChildren<MeshFilter>();
         _roadPlaneMF.mesh = _mesh;
 
+        // Set up materials
         materials.Add(_roadMaterialDark);
         materials.Add(_roadMaterialLight);
-
     }
 
     // Start is called before the first frame update
@@ -101,14 +91,7 @@ public class DriveRenderer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKey("w"))
-        {
-            _cameraPosition.Set(_cameraPosition.x,_cameraPosition.y,_cameraPosition.z+50);
-        }
-
-        GenerateMesh();
-
-        if (_enableSpriteRenderer)
+        if (_useSpriteRenderer)
         {
             _roadPlaneMR.enabled = false;
             _roadPlaneSR.enabled = true;
@@ -118,73 +101,44 @@ public class DriveRenderer : MonoBehaviour
             _roadPlaneSR.enabled = false;
             _roadPlaneMR.enabled = true;
         }
+
+        if (Input.GetKey("w"))
+            _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z + 1);
+        if (Input.GetKey("s"))
+            _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z - 1);
+
+        GenerateMesh();
     }
 
     // OnRenderObject is called after camera has rendered the scene
     private void OnRenderObject()
     {
-        if(_enableSpriteRenderer)
+        if(_useSpriteRenderer)
             Draw();
     }
-
+    
     void GenerateRoad()
     {
         _road.Clear();
-        
-        //for (int i = 0; i < segmentCount; i++)
-        //    road.Add(new Segment(i, new Point(new Vector3(0.0f, 0.0f, (i+1)*segmentLength), new Vector3(), new Vector3()), new Point(new Vector3(0.0f, 0.0f, (i+2) * segmentLength), new Vector3(), new Vector3()), (Convert.ToBoolean(Math.Floor((double)(i/rumbleLength)%2))) ? Color.red : Color.white));
-
-        for (int i = 0; i <= _segmentCount; i++)
-        {
-            _points.Add(new Point(new Vector3(0.0f, 0.0f, (i + 1) * _segmentLength)));
-        }
-
-        for (int i = 0; i < _segmentCount; i++)
-        {
-            _road.Add(new Segment(i, _points[i], _points[i+1], (Convert.ToBoolean(Math.Floor((double)(i / _rumbleLength) % 2))) ? Color.red : Color.white));
-        }
+        for (int i = 0; i < (_segmentCount + 1); i++)
+            _road.Add(new RoadPoint(new Vector3(0.0f, 0.0f, (i + 1) * _segmentLength)));
     }
 
-    void ProjectAll()
+    void Project(RoadPoint point, int roadWidth, Vector3 cameraPosition, float cameraDistanceZ, int viewportHeight, int viewportWidth, int pixelsPerUnit, Vector3 positionOffset)
     {
-        Point segmentPoint;
-        for(int i=0; i <= _segmentCount; i++)
-        {
-            if (i != _segmentCount)
-                segmentPoint = _road[i].p1;
-            else
-                segmentPoint = _road[i-1].p2;
+        point.Camera.x = point.World.x - cameraPosition.x;
+        point.Camera.y = point.World.y - cameraPosition.y;
+        point.Camera.z = point.World.z - cameraPosition.z;
 
-            Project(segmentPoint);
-        }
-    }
+        point.View.x = point.Camera.x   * (cameraDistanceZ / point.Camera.z);
+        point.View.y = point.Camera.y   * (cameraDistanceZ / point.Camera.z);
+        point.View.z = 0.0f;
+        point.View.w = (float)roadWidth * (cameraDistanceZ / point.Camera.z);
 
-    void Project(Point point)
-    {
-        point.camera.x = point.world.x - _cameraPosition.x;
-        point.camera.y = point.world.y - _cameraPosition.y;
-        point.camera.z = point.world.z - _cameraPosition.z;
-        point.screenScale = _cameraDistanceZ / point.camera.z;
-        point.screen.x = point.screenScale * point.camera.x;
-        point.screen.y = point.screenScale * point.camera.y;
-        point.screenWidth = point.screenScale * (float)_roadWidth;
-
-        if (_enableSpriteRenderer)
-        {
-            /* Sprite Renderer */
-            point.transform.x =     point.screen.x * ((float)_viewportWidth  / 2.0f) / (float)_pixelsPerUnit + _screenPosition.x;
-            point.transform.y =     point.screen.y * ((float)_viewportHeight / 2.0f) / (float)_pixelsPerUnit + _screenPosition.y;
-            point.transform.z =     _screenPosition.z;
-            point.transformWidth =  point.screenWidth * ((float)_viewportWidth / 2.0f) / (float)_pixelsPerUnit;
-        }
-        else
-        {
-            /* Mesh Renderer */
-            point.transform.x =     point.screen.x * ((float)_viewportWidth  / 2.0f) / (float)_pixelsPerUnit;
-            point.transform.y =     point.screen.y * ((float)_viewportHeight / 2.0f) / (float)_pixelsPerUnit;
-            point.transform.z =     _screenPosition.z;
-            point.transformWidth =  point.screenWidth * ((float)_viewportWidth / 2.0f) / (float)_pixelsPerUnit;
-        }
+        point.Transform.x = point.View.x * ((float)viewportWidth  / 2.0f) / (float)pixelsPerUnit + positionOffset.x;
+        point.Transform.y = point.View.y * ((float)viewportHeight / 2.0f) / (float)pixelsPerUnit + positionOffset.y;
+        point.Transform.z = point.View.z + positionOffset.z;
+        point.Transform.w = point.View.w * ((float)viewportWidth  / 2.0f) / (float)pixelsPerUnit;
     }
 
     private void Draw()
@@ -212,54 +166,37 @@ public class DriveRenderer : MonoBehaviour
 
     private void GenerateMesh()
     {
-        _roadSection.Clear();
-        Segment baseSegment = _road[(int)Math.Floor(_cameraPosition.z / _segmentLength)];
-        Debug.Log("CameraPositionZ = " + _cameraPosition.z);
-        Debug.Log("BaseSegmentIndex = " + baseSegment.index);
-        Segment segment;
-        Point point;
-        Boolean addToMesh;
-        for (int n = 0, i; n <= _drawDistance; n++)
-        {
-            i = baseSegment.index + n;
-            if (i != _segmentCount)
-            {
-                segment = _road[i];
-                point = _road[i].p1;
-                addToMesh = true;
-            }
-            else
-            {
-                segment = _road[i - 1]; // i think this is wrong
-                point = _road[i - 1].p2;
-                addToMesh = false;
-            }
-            
-            Project(point);
-
-            if (addToMesh == true)
-                _roadSection.Add(segment);
-        }
-
         _mesh.Clear();
         _meshBuilder.ResetOffsets();
-        for (int i = 0; i < _roadSection.Count; i++)
-        {
-            _meshBuilder.AddVertex(_roadSection[i].p1.transform.x - (_roadSection[i].p1.transformWidth / 2.0f), _roadSection[i].p1.transform.y, _roadSection[i].p1.transform.z);
-            _meshBuilder.AddVertex(_roadSection[i].p1.transform.x + (_roadSection[i].p1.transformWidth / 2.0f), _roadSection[i].p1.transform.y, _roadSection[i].p1.transform.z);
-            _meshBuilder.AddUV(0, (_roadSection[i].index) % 2 == 0 ? 0 : 1);
-            _meshBuilder.AddUV(1, (_roadSection[i].index) % 2 == 0 ? 0 : 0);
-            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-        }
-        for (int i = 0, j = 0, submeshIndex; i < (_roadSection.Count) - 1; i++, j+=2)
-        {
-            submeshIndex = (_roadSection[i].index) % 2 == 0 ? 0 : 1;
-            _meshBuilder.AddTriangle(j    , j + 2, j + 1, submeshIndex);
-            _meshBuilder.AddTriangle(j + 1, j + 2, j + 3, submeshIndex);
-        }
 
+        int startPointIndex = (int)Math.Floor((double)_cameraPosition.z / (double)_segmentLength);
+
+
+        for (int n = 0, i = (int)Math.Floor((double)_cameraPosition.z / (double)_segmentLength); n < _drawDistance && (i + 1) < _road.Count; n++, i++)
+        {
+            Project(_road[i    ], _roadWidth, _cameraPosition, _cameraDistanceZ, _viewportHeight, _viewportWidth, _pixelsPerUnit, _useSpriteRenderer == true ? _screenPosition : Vector3.zero);
+            Project(_road[i + 1], _roadWidth, _cameraPosition, _cameraDistanceZ, _viewportHeight, _viewportWidth, _pixelsPerUnit, _useSpriteRenderer == true ? _screenPosition : Vector3.zero);
+
+            _meshBuilder.AddVertex(_road[i    ].Transform.x - (_road[i    ].Transform.w / 2.0f), _road[i    ].Transform.y, _road[i    ].Transform.z);
+            _meshBuilder.AddVertex(_road[i    ].Transform.x + (_road[i    ].Transform.w / 2.0f), _road[i    ].Transform.y, _road[i    ].Transform.z);
+            _meshBuilder.AddVertex(_road[i + 1].Transform.x - (_road[i + 1].Transform.w / 2.0f), _road[i + 1].Transform.y, _road[i + 1].Transform.z);
+            _meshBuilder.AddVertex(_road[i + 1].Transform.x + (_road[i + 1].Transform.w / 2.0f), _road[i + 1].Transform.y, _road[i + 1].Transform.z);
+            
+            _meshBuilder.AddUV(0, (i    ) % 2 == 0 ? 0 : 1);
+            _meshBuilder.AddUV(1, (i    ) % 2 == 0 ? 0 : 1);
+            _meshBuilder.AddUV(0, (i + 1) % 2 == 0 ? 0 : 1);
+            _meshBuilder.AddUV(1, (i + 1) % 2 == 0 ? 0 : 1);
+            
+            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
+            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
+            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
+            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
+            
+            _meshBuilder.AddTriangle(n * 4    , n * 4 + 2, n * 4 + 1, i % 2 == 0 ? 0 : 1);
+            _meshBuilder.AddTriangle(n * 4 + 1, n * 4 + 2, n * 4 + 3, i % 2 == 0 ? 0 : 1);
+        }
+        
         _meshBuilder.ToMesh(_mesh);
     }
-
+    
 }

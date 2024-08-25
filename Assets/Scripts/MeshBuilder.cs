@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace Assets.Scripts
 {
@@ -47,12 +42,12 @@ namespace Assets.Scripts
         public void AddVertex(float x, float y, float z)
         {
             if (offsets["vertices"] < vertices.Count)
-                vertices[offsets["vertices"]++].Set(x, y, z);
+                vertices[offsets["vertices"]++] = new(x, y, z);
             else
             {
                 vertices.Add(new Vector3(x, y, z));
                 offsets["vertices"]++;
-            } 
+            }
         }
 
         public void AddNormal(float x, float y, float z)
@@ -150,11 +145,6 @@ namespace Assets.Scripts
             AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
             AddTriangle(indices[0], indices[2], indices[1]);
             AddTriangle(indices[1], indices[2], indices[3]);
-        }
-
-        public void AddSegments(List<Segment> segments)
-        {
-
         }
     }
 }
