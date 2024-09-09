@@ -29,7 +29,7 @@ public class DriveRenderer : MonoBehaviour
     private readonly int _segmentLength         = 200;                  // number of lines per segment
     private readonly int _segmentCount          = 500;                  // number of segments that make up the road
     private readonly int _roadWidth             = 2000;                 // number of pixels wide the road is
-    //private readonly int _rumbleLength          = 3;                       // number of segments per rumble strip
+    //private readonly int _rumbleLength          = 3;                    // number of segments per rumble strip
     [SerializeField]
     private int _drawDistance                   = 200;                  // number of segments to draw
 
@@ -103,9 +103,9 @@ public class DriveRenderer : MonoBehaviour
         }
 
         if (Input.GetKey("w"))
-            _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z + 1);
+            _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z + 6);
         if (Input.GetKey("s"))
-            _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z - 1);
+            _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z - 6);
 
         GenerateMesh();
     }

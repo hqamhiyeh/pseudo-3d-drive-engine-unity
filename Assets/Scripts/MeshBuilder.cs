@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Assets.Scripts
@@ -11,19 +14,19 @@ namespace Assets.Scripts
         private const int INITIAL_ARRAY_CAPACITY_UVS          = 100;
         private const int INITIAL_ARRAY_CAPACITY_TRIANGLES    = 100;
 
-        Vector3[]   vertices;
-        Vector3[]   normals;
-        Vector2[]   uvs;
-        List<int[]> triangles;
-        Dictionary<string,int> offsets;
+        private Vector3[]   _vertices;
+        private Vector3[]   _normals;
+        private Vector2[]   _uvs;
+        private List<int[]> _triangles;
+        private Dictionary<string,int> _offsets;
 
         public MeshBuilder(int submeshCount = 1)
         {
-            vertices    = new Vector3[INITIAL_ARRAY_CAPACITY_VERTICES];
-            normals     = new Vector3[INITIAL_ARRAY_CAPACITY_NORMALS];
-            uvs         = new Vector2[INITIAL_ARRAY_CAPACITY_UVS];
-            triangles   = new List<int[]>() { new int[INITIAL_ARRAY_CAPACITY_TRIANGLES] };
-            offsets     = new Dictionary<string, int>()
+            _vertices    = new Vector3[INITIAL_ARRAY_CAPACITY_VERTICES];
+            _normals     = new Vector3[INITIAL_ARRAY_CAPACITY_NORMALS];
+            _uvs         = new Vector2[INITIAL_ARRAY_CAPACITY_UVS];
+            _triangles   = new List<int[]>() { new int[INITIAL_ARRAY_CAPACITY_TRIANGLES] };
+            _offsets     = new Dictionary<string, int>()
             {
                 { "vertices"    , 0 },
                 { "normals"     , 0 },
@@ -34,55 +37,64 @@ namespace Assets.Scripts
                 AddSubmesh();
         }
 
-        public Vector3[] GetVertices() { return vertices[0..(offsets["vertices"] - 1)]; }
-        public Vector3[] GetNormals() { return normals[0..(offsets["normals"] - 1)]; }
-        public Vector2[] GetUVs() { return uvs[0..(offsets["uvs"] - 1)]; }
-        public int[] GetTriangles(int submeshIndex = 0) { return triangles[submeshIndex][0..(offsets[("triangles" + submeshIndex)] - 1)]; }
+        public IReadOnlyList<Vector3>    Vertices    { get => _vertices  [0..(_offsets["vertices"]   - 1)]; }
+        public IReadOnlyList<Vector3>    Normals     { get => _normals   [0..(_offsets["normals"]    - 1)]; }
+        public IReadOnlyList<Vector2>    UVs         { get => _uvs       [0..(_offsets["uvs"]        - 1)]; }
+        public IReadOnlyDictionary<string, IReadOnlyList<int>> Triangles
+        { 
+            get
+            {
+                Dictionary<string, IReadOnlyList<int>> triangles = new();
+                for (int index = 0; index < _triangles.Count; index++)
+                    triangles.Add("triangles" + index, _triangles[index][0..(_offsets[("triangles" + index)] - 1)]);
+                return triangles;
+            }
+        }
 
         public void AddSubmesh()
         {
-            triangles.Add(new int[INITIAL_ARRAY_CAPACITY_TRIANGLES]);
-            offsets.Add("triangles" + (triangles.Count - 1), 0);
+            _triangles.Add(new int[INITIAL_ARRAY_CAPACITY_TRIANGLES]);
+            _offsets.Add("triangles" + (_triangles.Count - 1), 0);
         }
 
         public void AddVertex(float x, float y, float z)
         {
-            if (offsets["vertices"] >= vertices.Length)
-                Array.Resize(ref vertices, vertices.Length * 2);
+            if (_offsets["vertices"] >= _vertices.Length)
+                Array.Resize(ref _vertices, _vertices.Length * 2);
             
-            vertices[offsets["vertices"]++].Set(x, y, z);
+            _vertices[_offsets["vertices"]++].Set(x, y, z);
         }
 
         public void AddNormal(float x, float y, float z)
         {
-            if (offsets["normals"] >= normals.Length)
-                Array.Resize(ref normals, normals.Length * 2);
+            if (_offsets["normals"] >= _normals.Length)
+                Array.Resize(ref _normals, _normals.Length * 2);
             
-            normals[offsets["normals"]++].Set(x, y, z);
+            _normals[_offsets["normals"]++].Set(x, y, z);
         }
 
         public void AddUV(float u, float v)
         {
-            if (offsets["uvs"] >= uvs.Length)
-                Array.Resize(ref uvs, uvs.Length * 2);
+            if (_offsets["uvs"] >= _uvs.Length)
+                Array.Resize(ref _uvs, _uvs.Length * 2);
             
-            uvs[offsets["uvs"]++].Set(u, v);
+            _uvs[_offsets["uvs"]++].Set(u, v);
         }
 
         public void AddTriangle(int a, int b, int c, int submeshIndex = 0)
         {
             string s = "triangles" + submeshIndex;
-            int[] submesh = triangles[submeshIndex];
+            int[] submesh = _triangles[submeshIndex];
             
-            if (offsets[s] + 2 >= submesh.Length)
+            if (_offsets[s] + 2 >= submesh.Length)
             {
                 Array.Resize<int>(ref submesh, submesh.Length * 2);
-                triangles[submeshIndex] = submesh;
+                _triangles[submeshIndex] = submesh;
             }
             
-            triangles[submeshIndex][offsets[s]++] = a;
-            triangles[submeshIndex][offsets[s]++] = b;
-            triangles[submeshIndex][offsets[s]++] = c;
+            _triangles[submeshIndex][_offsets[s]++] = a;
+            _triangles[submeshIndex][_offsets[s]++] = b;
+            _triangles[submeshIndex][_offsets[s]++] = c;
         }
 
         public void ToMesh(Mesh mesh)
@@ -91,30 +103,30 @@ namespace Assets.Scripts
             mesh.normals = null;
             mesh.uv = null;
             mesh.triangles = null;
-            mesh.subMeshCount = triangles.Count;
-            mesh.SetVertices(vertices, 0, offsets["vertices"]);
-            mesh.SetNormals(normals, 0, offsets["normals"]);
-            mesh.SetUVs(0, uvs, 0, offsets["uvs"]);
-            for (int i = 0; i < triangles.Count; i++)
-                mesh.SetTriangles(triangles[i], 0, offsets["triangles" + i], i, true, 0);
+            mesh.subMeshCount = _triangles.Count;
+            mesh.SetVertices(_vertices, 0, _offsets["vertices"]);
+            mesh.SetNormals(_normals, 0, _offsets["normals"]);
+            mesh.SetUVs(0, _uvs, 0, _offsets["uvs"]);
+            for (int i = 0; i < _triangles.Count; i++)
+                mesh.SetTriangles(_triangles[i], 0, _offsets["triangles" + i], i, true, 0);
         }
 
         public void ResetOffsets()
         {
-            offsets["vertices"] = 0;
-            offsets["normals"] = 0;
-            offsets["uvs"] = 0;
-            offsets["triangles0"] = 0;
-            for (int i = 1; i < triangles.Count; i++)
-                offsets["triangles" + i] = 0;
+            _offsets["vertices"] = 0;
+            _offsets["normals"] = 0;
+            _offsets["uvs"] = 0;
+            _offsets["triangles0"] = 0;
+            for (int i = 1; i < _triangles.Count; i++)
+                _offsets["triangles" + i] = 0;
         }
 
         public void AddTri(Vector3 a, Vector3 b, Vector3 c, int submeshIndex)
         {
             int[] indices = new int[3];
-            AddVertex(a.x, a.y, a.z); indices[0] = offsets["vertices"] - 1;
-            AddVertex(b.x, b.y, b.z); indices[1] = offsets["vertices"] - 1;
-            AddVertex(c.x, c.y, c.z); indices[2] = offsets["vertices"] - 1;
+            AddVertex(a.x, a.y, a.z); indices[0] = _offsets["vertices"] - 1;
+            AddVertex(b.x, b.y, b.z); indices[1] = _offsets["vertices"] - 1;
+            AddVertex(c.x, c.y, c.z); indices[2] = _offsets["vertices"] - 1;
             AddUV(0, 0);
             AddUV(1, 0);
             AddUV(0, 1);
@@ -127,10 +139,10 @@ namespace Assets.Scripts
         public void AddQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, int submeshIndex)
         {
             int[] indices = new int[4];
-            AddVertex(a.x, a.y, a.z); indices[0] = offsets["vertices"] - 1;
-            AddVertex(b.x, b.y, b.z); indices[1] = offsets["vertices"] - 1;
-            AddVertex(c.x, c.y, c.z); indices[2] = offsets["vertices"] - 1;
-            AddVertex(d.x, d.y, d.z); indices[3] = offsets["vertices"] - 1;
+            AddVertex(a.x, a.y, a.z); indices[0] = _offsets["vertices"] - 1;
+            AddVertex(b.x, b.y, b.z); indices[1] = _offsets["vertices"] - 1;
+            AddVertex(c.x, c.y, c.z); indices[2] = _offsets["vertices"] - 1;
+            AddVertex(d.x, d.y, d.z); indices[3] = _offsets["vertices"] - 1;
             AddUV(0, 0);
             AddUV(1, 0);
             AddUV(0, 1);
