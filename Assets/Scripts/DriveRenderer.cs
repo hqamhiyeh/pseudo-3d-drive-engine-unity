@@ -26,12 +26,12 @@ public class DriveRenderer : MonoBehaviour
     [SerializeField] private Material _roadMaterialLight;               // Light color for road mesh
     private List<Material> materials = new();                           // Materials to apply to meshes
 
-    private readonly int _segmentLength      = 200;                     // number of lines per segment
-    private readonly int _segmentCount       = 500;                     // number of segments that make up the road
-    private readonly int _roadWidth          = 2000;                    // number of pixels wide the road is
-    //private readonly int _rumbleLength       = 3;                       // number of segments per rumble strip
+    private readonly int _segmentLength         = 200;                  // number of lines per segment
+    private readonly int _segmentCount          = 500;                  // number of segments that make up the road
+    private readonly int _roadWidth             = 2000;                 // number of pixels wide the road is
+    //private readonly int _rumbleLength          = 3;                       // number of segments per rumble strip
     [SerializeField]
-    private int _drawDistance       = 200;                              // number of segments to draw
+    private int _drawDistance                   = 200;                  // number of segments to draw
 
     private Vector3 _cameraPosition = new(0.0f, 1000.0f, 0.0f);         // POV camera position
     private Vector3 _screenPosition;                                    // Position of screen. Automatically set to position of screen object.

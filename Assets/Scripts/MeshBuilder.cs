@@ -1,22 +1,28 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Assets.Scripts
 {
     internal class MeshBuilder
     {
-        List<Vector3> vertices;
-        List<Vector3> normals;
-        List<Vector2> uvs;
-        List<List<int>> triangles;
+        private const int INITIAL_ARRAY_CAPACITY_VERTICES     = 100;
+        private const int INITIAL_ARRAY_CAPACITY_NORMALS      = 100;
+        private const int INITIAL_ARRAY_CAPACITY_UVS          = 100;
+        private const int INITIAL_ARRAY_CAPACITY_TRIANGLES    = 100;
+
+        Vector3[]   vertices;
+        Vector3[]   normals;
+        Vector2[]   uvs;
+        List<int[]> triangles;
         Dictionary<string,int> offsets;
 
         public MeshBuilder(int submeshCount = 1)
         {
-            vertices    = new List<Vector3>();
-            normals     = new List<Vector3>();
-            uvs         = new List<Vector2>();
-            triangles   = new List<List<int>>() { new List<int>() };
+            vertices    = new Vector3[INITIAL_ARRAY_CAPACITY_VERTICES];
+            normals     = new Vector3[INITIAL_ARRAY_CAPACITY_NORMALS];
+            uvs         = new Vector2[INITIAL_ARRAY_CAPACITY_UVS];
+            triangles   = new List<int[]>() { new int[INITIAL_ARRAY_CAPACITY_TRIANGLES] };
             offsets     = new Dictionary<string, int>()
             {
                 { "vertices"    , 0 },
@@ -28,65 +34,55 @@ namespace Assets.Scripts
                 AddSubmesh();
         }
 
-        public Vector3[] GetVertices() { return vertices.ToArray(); }
-        public Vector3[] GetNormals() { return normals.ToArray(); }
-        public Vector2[] GetUVs() { return uvs.ToArray(); }
-        public int[] GetTriangles(int submeshIndex = 0) { return triangles[submeshIndex].ToArray(); }
+        public Vector3[] GetVertices() { return vertices[0..(offsets["vertices"] - 1)]; }
+        public Vector3[] GetNormals() { return normals[0..(offsets["normals"] - 1)]; }
+        public Vector2[] GetUVs() { return uvs[0..(offsets["uvs"] - 1)]; }
+        public int[] GetTriangles(int submeshIndex = 0) { return triangles[submeshIndex][0..(offsets[("triangles" + submeshIndex)] - 1)]; }
 
         public void AddSubmesh()
         {
-            triangles.Add(new List<int>());
+            triangles.Add(new int[INITIAL_ARRAY_CAPACITY_TRIANGLES]);
             offsets.Add("triangles" + (triangles.Count - 1), 0);
         }
 
         public void AddVertex(float x, float y, float z)
         {
-            if (offsets["vertices"] < vertices.Count)
-                vertices[offsets["vertices"]++] = new(x, y, z);
-            else
-            {
-                vertices.Add(new Vector3(x, y, z));
-                offsets["vertices"]++;
-            }
+            if (offsets["vertices"] >= vertices.Length)
+                Array.Resize(ref vertices, vertices.Length * 2);
+            
+            vertices[offsets["vertices"]++].Set(x, y, z);
         }
 
         public void AddNormal(float x, float y, float z)
         {
-            if (offsets["normals"] < normals.Count)
-                normals[offsets["normals"]++].Set(x, y, z);
-            else
-            {
-                normals.Add(new Vector3(x, y, z));
-                offsets["normals"]++;
-            }
+            if (offsets["normals"] >= normals.Length)
+                Array.Resize(ref normals, normals.Length * 2);
+            
+            normals[offsets["normals"]++].Set(x, y, z);
         }
 
         public void AddUV(float u, float v)
         {
-            if (offsets["uvs"] < uvs.Count)
-                uvs[offsets["uvs"]++].Set(u, v);
-            else
-            {
-                uvs.Add(new Vector2(u, v));
-                offsets["uvs"]++;
-            }
+            if (offsets["uvs"] >= uvs.Length)
+                Array.Resize(ref uvs, uvs.Length * 2);
+            
+            uvs[offsets["uvs"]++].Set(u, v);
         }
 
         public void AddTriangle(int a, int b, int c, int submeshIndex = 0)
         {
             string s = "triangles" + submeshIndex;
-            if (offsets[s] < triangles[submeshIndex].Count)
+            int[] submesh = triangles[submeshIndex];
+            
+            if (offsets[s] + 2 >= submesh.Length)
             {
-                triangles[submeshIndex][offsets[s]++] = a;
-                triangles[submeshIndex][offsets[s]++] = b;
-                triangles[submeshIndex][offsets[s]++] = c;
+                Array.Resize<int>(ref submesh, submesh.Length * 2);
+                triangles[submeshIndex] = submesh;
             }
-            else
-            {
-                triangles[submeshIndex].Add(a); offsets[s]++;
-                triangles[submeshIndex].Add(b); offsets[s]++;
-                triangles[submeshIndex].Add(c); offsets[s]++;
-            }
+            
+            triangles[submeshIndex][offsets[s]++] = a;
+            triangles[submeshIndex][offsets[s]++] = b;
+            triangles[submeshIndex][offsets[s]++] = c;
         }
 
         public void ToMesh(Mesh mesh)
@@ -116,9 +112,9 @@ namespace Assets.Scripts
         public void AddTri(Vector3 a, Vector3 b, Vector3 c, int submeshIndex)
         {
             int[] indices = new int[3];
-            AddVertex(a.x, a.y, a.z); indices[0] = vertices.Count - 1;
-            AddVertex(b.x, b.y, b.z); indices[1] = vertices.Count - 1;
-            AddVertex(c.x, c.y, c.z); indices[2] = vertices.Count - 1;
+            AddVertex(a.x, a.y, a.z); indices[0] = offsets["vertices"] - 1;
+            AddVertex(b.x, b.y, b.z); indices[1] = offsets["vertices"] - 1;
+            AddVertex(c.x, c.y, c.z); indices[2] = offsets["vertices"] - 1;
             AddUV(0, 0);
             AddUV(1, 0);
             AddUV(0, 1);
@@ -131,10 +127,10 @@ namespace Assets.Scripts
         public void AddQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, int submeshIndex)
         {
             int[] indices = new int[4];
-            AddVertex(a.x, a.y, a.z); indices[0] = vertices.Count - 1;
-            AddVertex(b.x, b.y, b.z); indices[1] = vertices.Count - 1;
-            AddVertex(c.x, c.y, c.z); indices[2] = vertices.Count - 1;
-            AddVertex(d.x, d.y, d.z); indices[3] = vertices.Count - 1;
+            AddVertex(a.x, a.y, a.z); indices[0] = offsets["vertices"] - 1;
+            AddVertex(b.x, b.y, b.z); indices[1] = offsets["vertices"] - 1;
+            AddVertex(c.x, c.y, c.z); indices[2] = offsets["vertices"] - 1;
+            AddVertex(d.x, d.y, d.z); indices[3] = offsets["vertices"] - 1;
             AddUV(0, 0);
             AddUV(1, 0);
             AddUV(0, 1);
