@@ -17,8 +17,8 @@ namespace Assets.Scripts
         private Vector3[]   _vertices;
         private Vector3[]   _normals;
         private Vector2[]   _uvs;
-        private List<int[]> _triangles;
-        private Dictionary<string,int> _offsets;
+        private readonly List<int[]> _triangles;
+        private readonly Dictionary<string,int> _offsets;
 
         public MeshBuilder(int submeshCount = 1)
         {
@@ -37,19 +37,21 @@ namespace Assets.Scripts
                 AddSubmesh();
         }
 
-        public IReadOnlyList<Vector3>    Vertices    { get => _vertices  [0..(_offsets["vertices"]   - 1)]; }
-        public IReadOnlyList<Vector3>    Normals     { get => _normals   [0..(_offsets["normals"]    - 1)]; }
-        public IReadOnlyList<Vector2>    UVs         { get => _uvs       [0..(_offsets["uvs"]        - 1)]; }
+        public IReadOnlyList<Vector3>    Vertices    { get => _offsets["vertices"]  == 0 ? Array.Empty<Vector3>() : _vertices   [0..(_offsets["vertices"]   - 1)]; }
+        public IReadOnlyList<Vector3>    Normals     { get => _offsets["normals"]   == 0 ? Array.Empty<Vector3>() : _normals    [0..(_offsets["normals"]    - 1)]; }
+        public IReadOnlyList<Vector2>    UVs         { get => _offsets["uvs"]       == 0 ? Array.Empty<Vector2>() : _uvs        [0..(_offsets["uvs"]        - 1)]; }
         public IReadOnlyDictionary<string, IReadOnlyList<int>> Triangles
         { 
             get
             {
                 Dictionary<string, IReadOnlyList<int>> triangles = new();
-                for (int index = 0; index < _triangles.Count; index++)
-                    triangles.Add("triangles" + index, _triangles[index][0..(_offsets[("triangles" + index)] - 1)]);
+                for (int submeshIndex = 0; submeshIndex < _triangles.Count; submeshIndex++)
+                    triangles.Add("triangles" + submeshIndex, _offsets["triangles" + submeshIndex] == 0 ? Array.Empty<int>() : _triangles[submeshIndex][0..(_offsets[("triangles" + submeshIndex)] - 1)]);
                 return triangles;
             }
         }
+
+        public Vector3 GetVertex(int verticesIndex) { return _vertices[verticesIndex]; }
 
         public void AddSubmesh()
         {

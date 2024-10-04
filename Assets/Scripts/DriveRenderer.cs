@@ -36,7 +36,7 @@ public class DriveRenderer : MonoBehaviour
     private Vector3 _cameraPosition = new(0.0f, 1000.0f, 0.0f);         // POV camera position
     private Vector3 _screenPosition;                                    // Position of screen. Automatically set to position of screen object.
     [SerializeField]
-    private float _fieldOfView      = 100;                              // ingame camera field of view
+    private float _fieldOfView      = 100;                              // ingame camera field of view in degrees
     private float _cameraDistanceZ;                                     // z distance camera is from screen (calculated)
 
     [SerializeField]
@@ -48,7 +48,7 @@ public class DriveRenderer : MonoBehaviour
         // Set app frame rate
         Application.targetFrameRate = _targetFrameRate;
 
-        // Set Drive scene objects positions and camera 
+        // Set Drive scene's objects' positions and camera 
         _screenPosition = _driveScreen.transform.position;
         _driveCamera.transform.position.Set(_screenPosition.x, _screenPosition.y, _screenPosition.z - 1);
         _driveCamera.orthographicSize = (float)_viewportHeight / (float)_pixelsPerUnit / 2.0f;
@@ -170,9 +170,7 @@ public class DriveRenderer : MonoBehaviour
         _meshBuilder.ResetOffsets();
 
         int startPointIndex = (int)Math.Floor((double)_cameraPosition.z / (double)_segmentLength);
-
-
-        for (int n = 0, i = (int)Math.Floor((double)_cameraPosition.z / (double)_segmentLength); n < _drawDistance && (i + 1) < _road.Count; n++, i++)
+        for (int n = 0, i = startPointIndex; n < _drawDistance && (i + 1) < _road.Count; n++, i++)
         {
             Project(_road[i    ], _roadWidth, _cameraPosition, _cameraDistanceZ, _viewportHeight, _viewportWidth, _pixelsPerUnit, _useSpriteRenderer == true ? _screenPosition : Vector3.zero);
             Project(_road[i + 1], _roadWidth, _cameraPosition, _cameraDistanceZ, _viewportHeight, _viewportWidth, _pixelsPerUnit, _useSpriteRenderer == true ? _screenPosition : Vector3.zero);
@@ -184,8 +182,8 @@ public class DriveRenderer : MonoBehaviour
             
             _meshBuilder.AddUV(0, (i    ) % 2 == 0 ? 0 : 1);
             _meshBuilder.AddUV(1, (i    ) % 2 == 0 ? 0 : 1);
-            _meshBuilder.AddUV(0, (i + 1) % 2 == 0 ? 0 : 1);
-            _meshBuilder.AddUV(1, (i + 1) % 2 == 0 ? 0 : 1);
+            _meshBuilder.AddUV( (_meshBuilder.GetVertex(n * 4 + 2).x - _meshBuilder.GetVertex(n * 4).x) / (_meshBuilder.GetVertex(n * 4 + 1).x - _meshBuilder.GetVertex(n * 4).x) , (i + 1) % 2 == 0 ? 0 : 1);
+            _meshBuilder.AddUV( (_meshBuilder.GetVertex(n * 4 + 3).x - _meshBuilder.GetVertex(n * 4).x) / (_meshBuilder.GetVertex(n * 4 + 1).x - _meshBuilder.GetVertex(n * 4).x) , (i + 1) % 2 == 0 ? 0 : 1);
             
             _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
             _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
