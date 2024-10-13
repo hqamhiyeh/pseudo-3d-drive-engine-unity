@@ -1,3 +1,5 @@
+//#define PROJECT_MESH_WITH_CPU     // Calculate mesh projection with the CPU instead of GPU shaders
+
 using Assets.Scripts;
 using System;
 using System.Collections.Generic;
@@ -22,7 +24,7 @@ public class DriveRenderer : MonoBehaviour
     private Mesh _mesh;                                                 // The mesh to render, constantly changing.
     private MeshBuilder _meshBuilder;                                   // Builder to create meshes
 
-    [SerializeField] private Material _roadMaterialDark;                // Dark color for road mesh
+    [SerializeField] public Material _roadMaterialDark;                // Dark color for road mesh
     [SerializeField] private Material _roadMaterialLight;               // Light color for road mesh
     private List<Material> materials = new();                           // Materials to apply to meshes
 
@@ -45,10 +47,10 @@ public class DriveRenderer : MonoBehaviour
     // Awake is called when the script instance is being loaded
     void Awake()
     {
-        // Set app frame rate
+        // Set frame rate
         Application.targetFrameRate = _targetFrameRate;
 
-        // Set Drive scene's objects' positions and camera 
+        // Set Drive scene objects' positions and camera 
         _screenPosition = _driveScreen.transform.position;
         _driveCamera.transform.position.Set(_screenPosition.x, _screenPosition.y, _screenPosition.z - 1);
         _driveCamera.orthographicSize = (float)_viewportHeight / (float)_pixelsPerUnit / 2.0f;
@@ -62,58 +64,70 @@ public class DriveRenderer : MonoBehaviour
         // Set pov camera distance (normalized) from viewport
         _cameraDistanceZ = (float)(1 / Math.Tan((_fieldOfView / 2) * Math.PI / 180));
 
-        // Initialize empty mesh & builder
-        _mesh = new Mesh() { indexFormat = IndexFormat.UInt16 };
-        _meshBuilder = new MeshBuilder(2);
-
-        // Set up road mesh renderer
-        _roadPlaneMR = _driveScreen.GetComponentInChildren<MeshRenderer>();
-        _roadPlaneMF = _driveScreen.GetComponentInChildren<MeshFilter>();
-        _roadPlaneMF.mesh = _mesh;
-
         // Set up materials
+#if PROJECT_MESH_WITH_CPU
+        GetComponent<Shader>().enabled = false;
         materials.Add(_roadMaterialDark);
         materials.Add(_roadMaterialLight);
+        _roadPlaneMR.SetMaterials(materials);
+#else
+        Material prototypeMaterial = Resources.Load("Prototype_Pseudo3D", typeof(Material)) as Material;
+        materials.Add(prototypeMaterial);
+        _roadPlaneMR.SetMaterials(materials);
+#endif
+
+        // Initialize empty mesh & builder
+        _mesh = new Mesh() { indexFormat = IndexFormat.UInt16 };
+        _meshBuilder = new MeshBuilder(materials.Count);
+
+        // Set up road mesh renderer
+        _roadPlaneMF.mesh = _mesh;
+
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        if (_useSpriteRenderer)
+        {
+            _roadPlaneMR.gameObject.SetActive(false);
+            _roadPlaneSR.gameObject.SetActive(true);
+        }
+        else
+        {
+            _roadPlaneMR.gameObject.SetActive(true);
+            _roadPlaneSR.gameObject.SetActive(false);
+        }
+
         GenerateRoad();
+
     }
 
     // FixedUpdate is called every fixed framerate frame
     private void FixedUpdate()
     {
-        
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (_useSpriteRenderer)
-        {
-            _roadPlaneMR.enabled = false;
-            _roadPlaneSR.enabled = true;
-        }
-        else
-        {
-            _roadPlaneSR.enabled = false;
-            _roadPlaneMR.enabled = true;
-        }
+        //if (Input.GetKey("w"))
+        //    _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z + 6);
+        //if (Input.GetKey("s"))
+        //    _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z - 6);
 
-        if (Input.GetKey("w"))
-            _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z + 6);
-        if (Input.GetKey("s"))
-            _cameraPosition.Set(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z - 6);
-
+#if PROJECT_MESH_WITH_CPU
+        GenerateProjectedMesh();
+#else
         GenerateMesh();
+#endif
+
     }
 
     // OnRenderObject is called after camera has rendered the scene
     private void OnRenderObject()
     {
-        if(_useSpriteRenderer)
+        if (_useSpriteRenderer)
             Draw();
     }
     
@@ -133,12 +147,12 @@ public class DriveRenderer : MonoBehaviour
         point.View.x = point.Camera.x   * (cameraDistanceZ / point.Camera.z);
         point.View.y = point.Camera.y   * (cameraDistanceZ / point.Camera.z);
         point.View.z = 0.0f;
-        point.View.w = (float)roadWidth * (cameraDistanceZ / point.Camera.z);
+        point.View.w = (float)roadWidth * (cameraDistanceZ / point.Camera.z);   // w component utilized for road width
 
         point.Transform.x = point.View.x * ((float)viewportWidth  / 2.0f) / (float)pixelsPerUnit + positionOffset.x;
         point.Transform.y = point.View.y * ((float)viewportHeight / 2.0f) / (float)pixelsPerUnit + positionOffset.y;
         point.Transform.z = point.View.z + positionOffset.z;
-        point.Transform.w = point.View.w * ((float)viewportWidth  / 2.0f) / (float)pixelsPerUnit;
+        point.Transform.w = point.View.w * ((float)viewportWidth  / 2.0f) / (float)pixelsPerUnit; // w component utilized for road width
     }
 
     private void Draw()
@@ -157,7 +171,7 @@ public class DriveRenderer : MonoBehaviour
             material.SetPass(0);
             Graphics.DrawMeshNow(_mesh, Matrix4x4.identity, submeshIndex);
         }
-        Graphics.CopyTexture(renderTexture, _roadPlaneSR.sprite.texture);
+        Graphics.CopyTexture(renderTexture, _roadPlaneSR.sprite.texture); 
         
         GL.PopMatrix();
         Graphics.SetRenderTarget(saveActiveRenderTexture);
@@ -172,6 +186,36 @@ public class DriveRenderer : MonoBehaviour
         int startPointIndex = (int)Math.Floor((double)_cameraPosition.z / (double)_segmentLength);
         for (int n = 0, i = startPointIndex; n < _drawDistance && (i + 1) < _road.Count; n++, i++)
         {
+            _meshBuilder.AddVertex(_road[i    ].World.x - (_roadWidth / 2.0f) / _pixelsPerUnit, _road[i    ].World.y / _pixelsPerUnit, _road[i    ].World.z / _pixelsPerUnit);
+            _meshBuilder.AddVertex(_road[i    ].World.x + (_roadWidth / 2.0f) / _pixelsPerUnit, _road[i    ].World.y / _pixelsPerUnit, _road[i    ].World.z / _pixelsPerUnit);
+            _meshBuilder.AddVertex(_road[i + 1].World.x - (_roadWidth / 2.0f) / _pixelsPerUnit, _road[i + 1].World.y / _pixelsPerUnit, _road[i + 1].World.z / _pixelsPerUnit);
+            _meshBuilder.AddVertex(_road[i + 1].World.x + (_roadWidth / 2.0f) / _pixelsPerUnit, _road[i + 1].World.y / _pixelsPerUnit, _road[i + 1].World.z / _pixelsPerUnit);
+
+            _meshBuilder.AddUV(0, 0);
+            _meshBuilder.AddUV(1, 0);
+            _meshBuilder.AddUV(0, 1);
+            _meshBuilder.AddUV(1, 1);
+
+            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
+            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
+            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
+            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
+
+            _meshBuilder.AddTriangle(n * 4    , n * 4 + 2, n * 4 + 1);
+            _meshBuilder.AddTriangle(n * 4 + 1, n * 4 + 2, n * 4 + 3);
+        }
+
+        _meshBuilder.ToMesh(_mesh);
+    }
+
+    private void GenerateProjectedMesh()
+    {
+        _mesh.Clear();
+        _meshBuilder.ResetOffsets();
+
+        int startPointIndex = (int)Math.Floor((double)_cameraPosition.z / (double)_segmentLength);
+        for (int n = 0, i = startPointIndex; n < _drawDistance && (i + 1) < _road.Count; n++, i++)
+        {
             Project(_road[i    ], _roadWidth, _cameraPosition, _cameraDistanceZ, _viewportHeight, _viewportWidth, _pixelsPerUnit, _useSpriteRenderer == true ? _screenPosition : Vector3.zero);
             Project(_road[i + 1], _roadWidth, _cameraPosition, _cameraDistanceZ, _viewportHeight, _viewportWidth, _pixelsPerUnit, _useSpriteRenderer == true ? _screenPosition : Vector3.zero);
 
@@ -179,12 +223,12 @@ public class DriveRenderer : MonoBehaviour
             _meshBuilder.AddVertex(_road[i    ].Transform.x + (_road[i    ].Transform.w / 2.0f), _road[i    ].Transform.y, _road[i    ].Transform.z);
             _meshBuilder.AddVertex(_road[i + 1].Transform.x - (_road[i + 1].Transform.w / 2.0f), _road[i + 1].Transform.y, _road[i + 1].Transform.z);
             _meshBuilder.AddVertex(_road[i + 1].Transform.x + (_road[i + 1].Transform.w / 2.0f), _road[i + 1].Transform.y, _road[i + 1].Transform.z);
-            
-            _meshBuilder.AddUV(0, (i    ) % 2 == 0 ? 0 : 1);
-            _meshBuilder.AddUV(1, (i    ) % 2 == 0 ? 0 : 1);
-            _meshBuilder.AddUV( (_meshBuilder.GetVertex(n * 4 + 2).x - _meshBuilder.GetVertex(n * 4).x) / (_meshBuilder.GetVertex(n * 4 + 1).x - _meshBuilder.GetVertex(n * 4).x) , (i + 1) % 2 == 0 ? 0 : 1);
-            _meshBuilder.AddUV( (_meshBuilder.GetVertex(n * 4 + 3).x - _meshBuilder.GetVertex(n * 4).x) / (_meshBuilder.GetVertex(n * 4 + 1).x - _meshBuilder.GetVertex(n * 4).x) , (i + 1) % 2 == 0 ? 0 : 1);
-            
+
+            _meshBuilder.AddUV(0, (i) % 2 == 0 ? 0 : 1);
+            _meshBuilder.AddUV(1, (i) % 2 == 0 ? 0 : 1);
+            _meshBuilder.AddUV((_meshBuilder.GetVertex(n * 4 + 2).x - _meshBuilder.GetVertex(n * 4).x) / (_meshBuilder.GetVertex(n * 4 + 1).x - _meshBuilder.GetVertex(n * 4).x), (i + 1) % 2 == 0 ? 0 : 1);
+            _meshBuilder.AddUV((_meshBuilder.GetVertex(n * 4 + 3).x - _meshBuilder.GetVertex(n * 4).x) / (_meshBuilder.GetVertex(n * 4 + 1).x - _meshBuilder.GetVertex(n * 4).x), (i + 1) % 2 == 0 ? 0 : 1);
+
             _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
             _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
             _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
@@ -196,5 +240,5 @@ public class DriveRenderer : MonoBehaviour
         
         _meshBuilder.ToMesh(_mesh);
     }
-    
+
 }

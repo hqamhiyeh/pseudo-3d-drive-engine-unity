@@ -1,132 +1,120 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
 Shader "Custom/Pseudo3D"
 {
     Properties
     {
-        [Header(Texture Properties)][Space]
         _MainTex ("Texture", 2D) = "white" {}
-        
-        [Header(Translate 1 Properties)][Space]
-        _Translate1X ("X", Range(-1.0,1.0)) = 0.0
-        _Translate1Y ("Y", Range(-1.0,1.0)) = 0.0
-        _Translate1Z ("Z", Range(-1.0,1.0)) = 1.0
 
-        [Header(Yaw Properties)][Space]
-        _YawAngle ("Angle", Range(-3.14, 3.14)) = 0.0
+        [Header(Camera Position Properties)][Space]
+        _CameraX ( "X", Float ) = 0.0
+        _CameraY ( "Y", Float ) = 10.0
+        _CameraZ ( "Z", Float ) = 0.0
 
-        [Header(Pitch Properties)][Space]
-        _Pitch("Pitch", Range(-10.0,10.0)) = 0.0
+        [Header(Camera Rotation Properties)][Space]
+        _Pan  ( "Pan" , Range(-360.0, 360.0) ) = 0.0
+        _Tilt ( "Tilt", Range(-360.0, 360.0) ) = 0.0
+        _Roll ( "Roll", Range(-360.0, 360.0) ) = 0.0
 
-        [Header(Roll Properties)][Space]
-        _Roll("Roll", Range(-10.0,10.0)) = 0.0
+        [Header(Projection Properties)][Space]
+        _FovY    ( "FovY"   , Range( 1.0,  120.0) ) = 60.0
+        _Aspect  ( "Aspect" , Range( 1.0,    2.0) ) = 1.0
+        _Near    ( "Near"   , Range( 0.1,  100.0) ) = 0.3
+        _Far     ( "Far"    , Range( 0.1, 1000.0) ) = 1000.0
 
-        [Header(Translate 2 Properties)][Space]
-        _Translate2X ("X", Range(-1.0,1.0)) = 0.0
-        _Translate2Y ("Y", Range(-1.0,1.0)) = 0.0
-        _Translate2Z ("Z", Range(-1.0,1.0)) = 1.0
+        [Header(Viewport Properties)][Space]
+        _Width  ( "Width" , Integer ) = 1920
+        _Height ( "Height", Integer ) = 1080
+        _PPU    ( "PPU"   , Integer ) = 100
 
-        [Header(Scale Properties)][Space]
-        _ScaleX ("X", Range(-1.0,1.0)) = 1.0
-        _ScaleY ("Y", Range(-1.0,1.0)) = 1.0
-        _ScaleZ ("Z", Range(-1.0,1.0)) = 1.0
-        
+        [Header(Texture Scale Properties)][Space]
+        _TexScaleX ( "X", Range(-1.0,2.0) ) = 1.0
+        _TexScaleY ( "Y", Range(-1.0,2.0) ) = 1.0
+        _TexScaleZ ( "Z", Range(-1.0,2.0) ) = 1.0
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
-       
+        LOD 100
+
         Pass
         {
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
-            
-            sampler2D _MainTex;
-            float _Translate1X;
-            float _Translate1Y;
-            float _Translate1Z;
-            float _YawAngle;
-            float _Pitch;
-            float _Roll;
-            float _Translate2X;
-            float _Translate2Y;
-            float _Translate2Z;
-            float _ScaleX;
-            float _ScaleY;
-            float _ScaleZ;
+            // make fog work
+            #pragma multi_compile_fog
 
-            struct v2f {
-                float4 pos : SV_POSITION;
+            #include "UnityCG.cginc"
+
+            struct appdata
+            {
+                float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
             };
- 
-            v2f vert(appdata_base v)
+
+            struct v2f
             {
+                float2 uv : TEXCOORD0;
+                UNITY_FOG_COORDS(1)
+                float4 vertex : SV_POSITION;
+            };
+
+            sampler2D _MainTex;
+            float4 _MainTex_ST;
+            
+            // transformation matrices set via script
+            float4x4 _View;
+            float4x4 _Perspective;
+            float4x4 _Viewport;
+
+            v2f vert (appdata v)
+            {
+                float4x4 transform =
+                    {
+                        1.0, 0.0, 0.0, 0.0,
+                        0.0, 1.0, 0.0, 0.0,
+                        0.0, 0.0, 1.0, 0.0,
+                        0.0, 0.0, 0.0, 1.0
+                    };
+                
+                transform = mul(_View       , transform);
+                transform = mul(_Perspective, transform);
+                transform = mul(_Viewport   , transform);
+                
+                v.vertex = mul(transform,v.vertex);
+                v.vertex = mul(UNITY_MATRIX_M,v.vertex);
+                v.vertex = mul(UNITY_MATRIX_V,v.vertex);
+                v.vertex = mul(UNITY_MATRIX_P,v.vertex);
+                
                 v2f o;
-                o.pos = UnityObjectToClipPos(v.vertex);
-                o.uv = v.texcoord.xy;
+                o.vertex = v.vertex;
+                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
- 
-            fixed4 frag(v2f i) : SV_Target
+
+            // texture scale matrix values
+            float _TexScaleX;
+            float _TexScaleY;
+            float _TexScaleZ;
+
+            fixed4 frag (v2f i) : SV_Target
             {
-                float3 _Translate1 = { _Translate1X, _Translate1Y, _Translate1Z };
-                float3 _Translate2 = { _Translate2X, _Translate2Y, _Translate2Z };
-                float3 _Scale = { _ScaleX, _ScaleY, _ScaleZ };
-                
-                float3x3 translate1 = {
-                    1.0, 0.0, _Translate1.x,
-                    0.0, 1.0, _Translate1.y,
-                    0.0, 0.0, _Translate1.z
-                };
+                float3x3 texScale =
+                    {
+                        _TexScaleX, 0.0, 0.0,
+                        0.0, _TexScaleY, 0.0,
+                        0.0, 0.0, _TexScaleZ
+                    };
 
-                float3x3 yaw = {
-                    cos(_YawAngle), sin(_YawAngle), 0.0,
-                    -sin(_YawAngle), cos(_YawAngle), 0.0,
-                    0.0, 0.0, 1.0
-                };
+                float3 uv = { i.uv.x - 0.5, i.uv.y - 0.5, 1.0 };
+                uv = mul(texScale, uv);
+                i.uv = (uv.xy / uv.z) + 0.5;
 
-                float3x3 pitch = {
-                    1.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0,
-                    _Roll, _Pitch, 1.0
-                };
-
-                float3x3 roll = {
-                    1.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0,
-                    0, 0.0, 1.0
-                };
-
-                float3x3 translate2 = {
-                    1.0, 0.0, _Translate2.x,
-                    0.0, 1.0, _Translate2.y,
-                    0.0, 0.0, _Translate2.z
-                };
-
-                float3x3 scale = {
-                    _Scale.x, 0.0, 0.0,
-                    0.0, _Scale.y, 0.0,
-                    0.0, 0.0, _Scale.z
-                };
-
-                float3x3 transform;
-                transform = translate1;
-                transform = mul(yaw, transform);
-                transform = mul(pitch, transform);
-                transform = mul(roll, transform);
-                transform = mul(translate2, transform);
-                transform = mul(scale, transform);
-
-                float3 uv = { (i.uv.x - 0.5), (i.uv.y - 0.5), 1.0 };
-                uv = mul(transform,uv);
-                
-                if(uv.z < 0.0) discard;
-
-                // Texel sampling
-                return tex2D(_MainTex, (uv.xy / uv.z) + 0.5);
+                // sample the texture
+                fixed4 col = tex2D(_MainTex, i.uv);
+                // apply fog
+                UNITY_APPLY_FOG(i.fogCoord, col);
+                return col;
             }
             ENDCG
         }

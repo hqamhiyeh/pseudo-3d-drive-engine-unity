@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Prototype_Pseudo3D
+  m_Shader: {fileID: 4800000, guid: 83bfd106ca40d8b43bdd7a67154806a6, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 4af0006074f337143be60a5f2769eb33, type: 3}
+        m_Scale: {x: 10, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints:
+    - _Height: 1080
+    - _PPU: 100
+    - _PixelsPerUnit: 100
+    - _Width: 1920
+    m_Floats:
+    - _Aspect: 1.777778
+    - _CameraX: 0
+    - _CameraY: 1
+    - _CameraZ: 0
+    - _Far: 1000
+    - _FovY: 60
+    - _Height: 2
+    - _Near: 0.3
+    - _OffsetZ: 0
+    - _Pan: 0
+    - _PixelsPerUnit: 1
+    - _Roll: 0
+    - _TexScaleX: 1
+    - _TexScaleY: 1
+    - _TexScaleZ: 1
+    - _Tilt: 0
+    - _ViewPortHeight: 1080
+    - _ViewPortWidth: 1920
+    - _Width: 2
+    m_Colors: []
+  m_BuildTextureStacks: []
