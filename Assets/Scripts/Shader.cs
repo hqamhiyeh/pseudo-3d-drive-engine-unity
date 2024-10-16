@@ -54,8 +54,8 @@ public class Shader : MonoBehaviour
     float aspect;
     float near;
     float far;
-    float f;    // "focal" distance
-    
+    float f;    // "focal" length
+
     // Viewport Matrix Parameters
     int width;
     int height;
@@ -71,17 +71,6 @@ public class Shader : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //if (_useSpriteRenderer)
-        //{
-        //    _roadPlaneMR.SetActive(false);
-        //    _roadPlaneSR.SetActive(true);
-        //}
-        //else
-        //{
-        //    _roadPlaneSR.SetActive(true);
-        //    _roadPlaneMR.SetActive(false);
-        //}
-
         _mIdentity   = UnityEngine.Matrix4x4.identity;
         _mView       = UnityEngine.Matrix4x4.identity;
         _mPan        = UnityEngine.Matrix4x4.identity;

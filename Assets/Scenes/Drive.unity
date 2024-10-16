@@ -122,6 +122,39 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &3493805
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3493806}
+  m_Layer: 0
+  m_Name: Road Plane
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3493806
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3493805}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1593921114}
+  - {fileID: 289249918}
+  m_Father: {fileID: 2095561414}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &289249917
 GameObject:
   m_ObjectHideFlags: 0
@@ -154,7 +187,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2095561414}
+  m_Father: {fileID: 3493806}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &289249919
 MeshFilter:
@@ -234,7 +267,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!108 &908270190
 Light:
   m_ObjectHideFlags: 0
@@ -324,7 +357,7 @@ GameObject:
   - component: {fileID: 1067725675}
   - component: {fileID: 1067725677}
   m_Layer: 0
-  m_Name: Drive Renderer
+  m_Name: Drive Engine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -342,19 +375,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3063d5b5832fe4742b221b342f644388, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _driveCamera: {fileID: 2017140180}
-  _driveScreen: {fileID: 2095561413}
-  _roadPlaneSR: {fileID: 1593921113}
-  _roadPlaneMR: {fileID: 289249920}
-  _roadPlaneMF: {fileID: 289249919}
-  _useSpriteRenderer: 0
-  _viewportWidth: 1920
-  _viewportHeight: 1080
-  _pixelsPerUnit: 100
+  _unityCamera: {fileID: 2017140180}
+  _unityScreen: {fileID: 2095561413}
+  _useSpriteRenderer: 1
+  <Viewport>k__BackingField:
+    <Width>k__BackingField: 1920
+    <Height>k__BackingField: 1080
+    <PPU>k__BackingField: 100
+  <Camera>k__BackingField:
+    _position: {x: 0, y: 1000, z: 0}
+    _FOV: 60
   _roadMaterialDark: {fileID: 2100000, guid: db7b8400b1a0d6f47a32ebc337873fb9, type: 2}
   _roadMaterialLight: {fileID: 2100000, guid: 9baf00811b407a14e8cb1ad830df4b5f, type: 2}
   _drawDistance: 200
-  _fieldOfView: 100
   _targetFrameRate: -1
 --- !u!4 &1067725676
 Transform:
@@ -387,7 +420,7 @@ MonoBehaviour:
   _screen: {fileID: 2095561413}
   _roadPlaneSR: {fileID: 1593921111}
   _roadPlaneMR: {fileID: 289249917}
-  _useSpriteRenderer: 0
+  _useSpriteRenderer: 1
   _projectionMatrix: 1
   _getGpuProjectionMatrix: 1
   _toRenderTexture: 0
@@ -475,7 +508,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2095561414}
+  m_Father: {fileID: 3493806}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2017140178
 GameObject:
@@ -598,8 +631,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1593921114}
-  - {fileID: 289249918}
+  - {fileID: 3493806}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807

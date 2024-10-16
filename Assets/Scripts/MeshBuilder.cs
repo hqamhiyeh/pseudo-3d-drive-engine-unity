@@ -19,7 +19,7 @@ namespace Assets.Scripts
         private Vector2[]   _uvs;
         private readonly List<int[]> _triangles;
         private readonly Dictionary<string,int> _offsets;
-
+        
         public MeshBuilder(int submeshCount = 1)
         {
             _vertices    = new Vector3[INITIAL_ARRAY_CAPACITY_VERTICES];
@@ -37,7 +37,7 @@ namespace Assets.Scripts
                 AddSubmesh();
         }
 
-        public IReadOnlyList<Vector3>    Vertices    { get => _offsets["vertices"]  == 0 ? Array.Empty<Vector3>() : _vertices   [0..(_offsets["vertices"]   - 1)]; }
+        public IReadOnlyList<Vector3>    Vertices    { get => (_offsets["vertices"]  == 0 ? Array.Empty<Vector3>() : _vertices   [0..(_offsets["vertices"]   - 1)]); }
         public IReadOnlyList<Vector3>    Normals     { get => _offsets["normals"]   == 0 ? Array.Empty<Vector3>() : _normals    [0..(_offsets["normals"]    - 1)]; }
         public IReadOnlyList<Vector2>    UVs         { get => _offsets["uvs"]       == 0 ? Array.Empty<Vector2>() : _uvs        [0..(_offsets["uvs"]        - 1)]; }
         public IReadOnlyDictionary<string, IReadOnlyList<int>> Triangles
