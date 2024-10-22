@@ -6,8 +6,9 @@ using UnityEngine;
 public class DriveEngineEditor : Editor
 {
     private P3dEngine _driveEngine;
-    //private SerializedProperty _sp__unityScreen;
-    //private SerializedProperty _sp_Viewport_Position;
+    private SerializedProperty _sp_Renderer;
+    private SerializedProperty _sp_Renderer__unityRenderers_GameObject;
+    private SerializedProperty _sp_Renderer__screen_Position;
     private SerializedProperty _sp_Camera__FOV;
 
     void OnEnable() {
@@ -15,8 +16,9 @@ public class DriveEngineEditor : Editor
         _driveEngine = (P3dEngine)serializedObject.targetObject;
 
         // Get serialized properties
-        //_sp__unityScreen = serializedObject.FindProperty("_unityScreen");
-        //_sp_Viewport_Position = serializedObject.FindProperty("<Viewport>k__BackingField").FindPropertyRelative("<Position>k__BackingField");
+        _sp_Renderer = serializedObject.FindProperty("<Renderer>k__BackingField");
+        _sp_Renderer__unityRenderers_GameObject = _sp_Renderer.FindPropertyRelative("_unityRenderers").FindPropertyRelative("<GameObject>k__BackingField");
+        _sp_Renderer__screen_Position = _sp_Renderer.FindPropertyRelative("_screen").FindPropertyRelative("<Position>k__BackingField");
         _sp_Camera__FOV = serializedObject.FindProperty("<Camera>k__BackingField").FindPropertyRelative("_FOV");
 
         //PrintSerializedProperties();
@@ -33,17 +35,17 @@ public class DriveEngineEditor : Editor
         serializedObject.Update();
 
         // Get new values
-        //Vector3 new__unityScreen_position = _sp__unityScreen.objectReferenceValue != null ? ((GameObject)_sp__unityScreen.objectReferenceValue).GetComponent<Transform>().position : Vector3.zero;
+        Vector3 new__unityRenderers_GameObject_position = _sp_Renderer__unityRenderers_GameObject.objectReferenceValue != null ? ((GameObject)_sp_Renderer__unityRenderers_GameObject.objectReferenceValue).GetComponent<Transform>().position : Vector3.zero;
 
         // Check if values have changed
         if (previous__FOV != _sp_Camera__FOV.intValue)
         {
             _driveEngine.Camera.FOV = _sp_Camera__FOV.intValue;
         }
-        //if (new__unityScreen_position != (Vector3)_sp_Viewport_Position.boxedValue)
-        //{
-        //    _sp_Viewport_Position.boxedValue = new__unityScreen_position;
-        //}
+        if (new__unityRenderers_GameObject_position != (Vector3)_sp_Renderer__screen_Position.boxedValue)
+        {
+            _sp_Renderer__screen_Position.boxedValue = new__unityRenderers_GameObject_position;
+        }
 
         serializedObject.ApplyModifiedProperties();
     }
