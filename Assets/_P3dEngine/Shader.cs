@@ -223,7 +223,7 @@ public class Shader : MonoBehaviour
         Debug.Log( "Far: "      + fp.zFar   );
         */
 
-        // Viewport Matrix
+        // Viewport Matrix (Separate into viewport & screen matrices, viewport is normalized)
         width   = _material.GetInteger("_Width");
         height  = _material.GetInteger("_Height");
         ppu     = _material.GetInteger("_PPU");

@@ -34,9 +34,9 @@ Material:
     - _Width: 1920
     m_Floats:
     - _Aspect: 1.777778
-    - _CameraX: 2.4599984
+    - _CameraX: -3.3699975
     - _CameraY: 1
-    - _CameraZ: 335.6896
+    - _CameraZ: 316.67038
     - _Far: 1000
     - _FovY: 60
     - _Height: 2

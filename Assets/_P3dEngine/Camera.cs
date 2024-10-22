@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Assets.Scripts
+namespace Assets._P3dEngine
 {
     [System.Serializable]
-    public class Camera
+    internal class Camera
     {
         private const float DEFAULT_CAMERA_HEIGHT   = 1000.0f;
         private const int   DEFAULT_CAMERA_FOV      = 60;

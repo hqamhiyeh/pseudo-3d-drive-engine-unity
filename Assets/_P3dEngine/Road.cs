@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Assets.Scripts
+namespace Assets._P3dEngine
 {
     internal class Road
     {

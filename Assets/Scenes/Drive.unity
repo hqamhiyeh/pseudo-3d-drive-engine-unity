@@ -354,8 +354,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1067725676}
-  - component: {fileID: 1067725675}
   - component: {fileID: 1067725677}
+  - component: {fileID: 1067725678}
   m_Layer: 0
   m_Name: Drive Engine
   m_TagString: Untagged
@@ -363,32 +363,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1067725675
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1067725674}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3063d5b5832fe4742b221b342f644388, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _unityCamera: {fileID: 2017140180}
-  _unityScreen: {fileID: 2095561413}
-  _useSpriteRenderer: 1
-  <Viewport>k__BackingField:
-    <Width>k__BackingField: 1920
-    <Height>k__BackingField: 1080
-    <PPU>k__BackingField: 100
-  <Camera>k__BackingField:
-    _position: {x: 0, y: 1000, z: 0}
-    _FOV: 60
-  _roadMaterialDark: {fileID: 2100000, guid: db7b8400b1a0d6f47a32ebc337873fb9, type: 2}
-  _roadMaterialLight: {fileID: 2100000, guid: 9baf00811b407a14e8cb1ad830df4b5f, type: 2}
-  _drawDistance: 200
-  _targetFrameRate: -1
 --- !u!4 &1067725676
 Transform:
   m_ObjectHideFlags: 0
@@ -405,6 +379,43 @@ Transform:
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1067725677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1067725674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3063d5b5832fe4742b221b342f644388, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _settings:
+    <ApplicationSettings>k__BackingField:
+      <TargetFrameRate>k__BackingField: -1
+      <WorldUnitsPerUnit>k__BackingField: 100
+      <DrawDistance>k__BackingField: 200
+    <RendererSettings>k__BackingField:
+      <UseSpriteRenderer>k__BackingField: 1
+  <Renderer>k__BackingField:
+    _unityCamera:
+      <GameObject>k__BackingField: {fileID: 2017140178}
+    _unityRenderers:
+      <GameObject>k__BackingField: {fileID: 2095561413}
+    _screen:
+      <Position>k__BackingField: {x: 40, y: 0, z: 0}
+      <Width>k__BackingField: 1920
+      <Height>k__BackingField: 1080
+      <PixelsPerUnit>k__BackingField: 100
+  <Camera>k__BackingField:
+    _position: {x: 0, y: 1000, z: 0}
+    _FOV: 60
+  _cpuMaterials:
+    RoadMaterialDark: {fileID: 2100000, guid: db7b8400b1a0d6f47a32ebc337873fb9, type: 2}
+    RoadMaterialLight: {fileID: 2100000, guid: 9baf00811b407a14e8cb1ad830df4b5f, type: 2}
+  _gpuMaterials:
+    PrototypeMaterial: {fileID: 2100000, guid: 4d44a39206c5f1f4497658e770ee12b5, type: 2}
+--- !u!114 &1067725678
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -612,7 +623,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2095561414}
   m_Layer: 0
-  m_Name: Drive Screen
+  m_Name: Drive Renderers
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
