@@ -355,9 +355,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1067725676}
   - component: {fileID: 1067725677}
-  - component: {fileID: 1067725678}
   m_Layer: 0
-  m_Name: Drive Engine
+  m_Name: P3D Engine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -392,12 +391,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _settings:
     <ApplicationSettings>k__BackingField:
-      <TargetFrameRate>k__BackingField: -1
-      <WorldUnitsPerUnit>k__BackingField: 100
-      <DrawDistance>k__BackingField: 200
+      TargetFrameRate: -1
+    <GeneratorSettings>k__BackingField:
+      WorldUnitsPerUnit: 100
+      DrawDistance: 200
     <RendererSettings>k__BackingField:
       <UseSpriteRenderer>k__BackingField: 1
-  <Renderer>k__BackingField:
+  _prototypeMaterials:
+    Cpu:
+      RoadDark: {fileID: 2100000, guid: db7b8400b1a0d6f47a32ebc337873fb9, type: 2}
+      RoadLight: {fileID: 2100000, guid: 9baf00811b407a14e8cb1ad830df4b5f, type: 2}
+    Gpu:
+      UnlitTexture: {fileID: 2100000, guid: 742a9b5e5c5570c4b8c7c8c292b8caf4, type: 2}
+      CustomPseudo3d: {fileID: 2100000, guid: 4d44a39206c5f1f4497658e770ee12b5, type: 2}
+  _renderer:
     _unityCamera:
       <GameObject>k__BackingField: {fileID: 2017140178}
     _unityRenderers:
@@ -407,36 +414,17 @@ MonoBehaviour:
       <Width>k__BackingField: 1920
       <Height>k__BackingField: 1080
       <PixelsPerUnit>k__BackingField: 100
-  <Camera>k__BackingField:
-    _position: {x: 0, y: 1000, z: 0}
-    _FOV: 60
-  _cpuMaterials:
-    RoadMaterialDark: {fileID: 2100000, guid: db7b8400b1a0d6f47a32ebc337873fb9, type: 2}
-    RoadMaterialLight: {fileID: 2100000, guid: 9baf00811b407a14e8cb1ad830df4b5f, type: 2}
-  _gpuMaterials:
-    PrototypeMaterial: {fileID: 2100000, guid: 4d44a39206c5f1f4497658e770ee12b5, type: 2}
---- !u!114 &1067725678
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1067725674}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2f1fac8dc6902e64dbf74618dab5dadd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _material: {fileID: 2100000, guid: 4d44a39206c5f1f4497658e770ee12b5, type: 2}
-  _screen: {fileID: 2095561413}
-  _roadPlaneSR: {fileID: 1593921111}
-  _roadPlaneMR: {fileID: 289249917}
-  _useSpriteRenderer: 1
-  _projectionMatrix: 1
-  _getGpuProjectionMatrix: 1
-  _toRenderTexture: 0
-  _enableProjectionTransform: 1
-  _enableViewportTransform: 1
+    _p3dShaderData:
+      ProjectionMatrix: 1
+      GetGpuProjectionMatrix: 1
+      ToRenderTexture: 0
+      EnableProjectionTransform: 1
+      EnableViewportTransform: 1
+  <World>k__BackingField:
+    <Camera>k__BackingField:
+      _position: {x: 0, y: 300, z: 0}
+      _FOV: 60
+      <AspectRatio>k__BackingField: 1.778
 --- !u!1 &1593921111
 GameObject:
   m_ObjectHideFlags: 0
@@ -521,37 +509,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3493806}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2000060960
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2000060961}
-  m_Layer: 0
-  m_Name: test
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2000060961
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2000060960}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 37.51794, y: -4.4495373, z: 10.207283}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2017140178
 GameObject:
   m_ObjectHideFlags: 0
@@ -564,7 +521,7 @@ GameObject:
   - component: {fileID: 2017140180}
   - component: {fileID: 2017140179}
   m_Layer: 0
-  m_Name: Drive Camera
+  m_Name: Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -654,7 +611,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2095561414}
   m_Layer: 0
-  m_Name: Drive Renderers
+  m_Name: Renderers
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -684,4 +641,3 @@ SceneRoots:
   - {fileID: 2017140181}
   - {fileID: 2095561414}
   - {fileID: 908270191}
-  - {fileID: 2000060961}

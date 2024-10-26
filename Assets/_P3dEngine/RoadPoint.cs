@@ -11,8 +11,8 @@ namespace Assets._P3dEngine
     {
         private Vector3 _world;
         private Vector3 _view;
-        private Vector4 _project;        // w component utilized for width of road line
-        private Vector4 _transform;   // w component utilized for width of road line
+        private Vector4 _project;       // w component utilized for width of road line
+        private Vector4 _screen;        // w component utilized for width of road line
 
         public RoadPoint(Vector3 world) { _world = world; }
 
@@ -31,9 +31,9 @@ namespace Assets._P3dEngine
             get { return ref _project; }
         }
 
-        public ref Vector4 Transform
+        public ref Vector4 Screen
         {
-            get { return ref _transform; }
+            get { return ref _screen; }
         }
     }
 }

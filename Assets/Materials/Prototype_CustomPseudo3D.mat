@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Prototype_Pseudo3D
+  m_Name: Prototype_CustomPseudo3D
   m_Shader: {fileID: 4800000, guid: 83bfd106ca40d8b43bdd7a67154806a6, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -33,10 +33,10 @@ Material:
     - _PixelsPerUnit: 100
     - _Width: 1920
     m_Floats:
-    - _Aspect: 1.777778
-    - _CameraX: -3.3699975
-    - _CameraY: 1
-    - _CameraZ: 316.67038
+    - _Aspect: 1.7777
+    - _CameraX: 0
+    - _CameraY: 1000
+    - _CameraZ: 0
     - _Far: 1000
     - _FovY: 60
     - _Height: 2

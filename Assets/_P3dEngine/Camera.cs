@@ -10,18 +10,21 @@ namespace Assets._P3dEngine
     [System.Serializable]
     internal class Camera
     {
-        private const float DEFAULT_CAMERA_HEIGHT   = 1000.0f;
+        private const float DEFAULT_CAMERA_HEIGHT   = 300.0f;
         private const int   DEFAULT_CAMERA_FOV      = 60;
+        private const float DEFAULT_CAMERA_ASPECT   = 1.778f;
 
         [SerializeField] private Vector3 _position;
         private int _fov;
         [SerializeField] private int _FOV;  // For unity inspector
         private float _focalLength;
+        
 
         public Camera()
         {
             _position = new(0.0f, DEFAULT_CAMERA_HEIGHT, 0.0f);
             FOV = DEFAULT_CAMERA_FOV;
+            AspectRatio = DEFAULT_CAMERA_ASPECT;
         }
 
         public ref Vector3 Position { get => ref _position; }
@@ -38,13 +41,14 @@ namespace Assets._P3dEngine
             }
         }
         public float FocalLength { get => _focalLength; }
+        [field: SerializeField] public float AspectRatio { get; set; }
 
         public void CalculateFocalLength()
         {
             _focalLength = (float)(1.0 / Math.Tan((_fov / 2.0) * Math.PI / 180.0));
         }
 
-        public void OnAwake()
+        public void ApplyEditorValues()
         {
             FOV = _FOV;
         }

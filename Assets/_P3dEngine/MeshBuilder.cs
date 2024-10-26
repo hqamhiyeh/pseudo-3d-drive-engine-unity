@@ -37,7 +37,7 @@ namespace Assets._P3dEngine
                 AddSubmesh();
         }
 
-        public IReadOnlyList<Vector3>    Vertices    { get => (_offsets["vertices"]  == 0 ? Array.Empty<Vector3>() : _vertices   [0..(_offsets["vertices"]   - 1)]); }
+        public IReadOnlyList<Vector3>    Vertices    { get => (_offsets["vertices"] == 0 ? Array.Empty<Vector3>() : _vertices   [0..(_offsets["vertices"]   - 1)]); }
         public IReadOnlyList<Vector3>    Normals     { get => _offsets["normals"]   == 0 ? Array.Empty<Vector3>() : _normals    [0..(_offsets["normals"]    - 1)]; }
         public IReadOnlyList<Vector2>    UVs         { get => _offsets["uvs"]       == 0 ? Array.Empty<Vector2>() : _uvs        [0..(_offsets["uvs"]        - 1)]; }
         public IReadOnlyDictionary<string, IReadOnlyList<int>> Triangles
@@ -56,7 +56,27 @@ namespace Assets._P3dEngine
         public void AddSubmesh()
         {
             _triangles.Add(new int[INITIAL_ARRAY_CAPACITY_TRIANGLES]);
-            _offsets.Add("triangles" + (_triangles.Count - 1), 0);
+            _offsets.Add("triangles" + _triangles.Count, 0);
+        }
+
+        public void RemoveSubmesh()
+        {
+            int i = _triangles.Count - 1;
+            _triangles.RemoveAt(i);
+            _offsets.Remove("triangles" + i.ToString());
+        }
+
+        public void SetSubmeshCount(int newSubmeshCount)
+        {
+            int submeshCount = _triangles.Count;
+
+            if (submeshCount < newSubmeshCount)
+                for (int i = 0; i < (newSubmeshCount - submeshCount); i++)
+                    AddSubmesh();
+
+            else if (submeshCount > newSubmeshCount)
+                for (int i = 0; i < submeshCount - newSubmeshCount; i++)
+                    RemoveSubmesh();
         }
 
         public void AddVertex(float x, float y, float z)

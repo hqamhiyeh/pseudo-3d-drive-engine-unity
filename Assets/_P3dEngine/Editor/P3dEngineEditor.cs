@@ -3,9 +3,9 @@ using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(P3dEngine))]
-public class DriveEngineEditor : Editor
+public class P3dEngineEditor : Editor
 {
-    private P3dEngine _driveEngine;
+    private IP3dEngineEditor _driveEngine;
     private SerializedProperty _sp_Renderer;
     private SerializedProperty _sp_Renderer__unityRenderers_GameObject;
     private SerializedProperty _sp_Renderer__screen_Position;
@@ -16,10 +16,25 @@ public class DriveEngineEditor : Editor
         _driveEngine = (P3dEngine)serializedObject.targetObject;
 
         // Get serialized properties
-        _sp_Renderer = serializedObject.FindProperty("<Renderer>k__BackingField");
-        _sp_Renderer__unityRenderers_GameObject = _sp_Renderer.FindPropertyRelative("_unityRenderers").FindPropertyRelative("<GameObject>k__BackingField");
-        _sp_Renderer__screen_Position = _sp_Renderer.FindPropertyRelative("_screen").FindPropertyRelative("<Position>k__BackingField");
-        _sp_Camera__FOV = serializedObject.FindProperty("<Camera>k__BackingField").FindPropertyRelative("_FOV");
+        _sp_Renderer =
+            serializedObject
+            .FindProperty("_renderer");
+
+        _sp_Renderer__unityRenderers_GameObject =
+            _sp_Renderer
+            .FindPropertyRelative("_unityRenderers")
+            .FindPropertyRelative("<GameObject>k__BackingField");
+
+        _sp_Renderer__screen_Position =
+            _sp_Renderer
+            .FindPropertyRelative("_screen")
+            .FindPropertyRelative("<Position>k__BackingField");
+
+        _sp_Camera__FOV =
+            serializedObject
+            .FindProperty("<World>k__BackingField")
+            .FindPropertyRelative("<Camera>k__BackingField")
+            .FindPropertyRelative("_FOV");
 
         //PrintSerializedProperties();
     }
@@ -40,7 +55,7 @@ public class DriveEngineEditor : Editor
         // Check if values have changed
         if (previous__FOV != _sp_Camera__FOV.intValue)
         {
-            _driveEngine.Camera.FOV = _sp_Camera__FOV.intValue;
+            _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.Camera);
         }
         if (new__unityRenderers_GameObject_position != (Vector3)_sp_Renderer__screen_Position.boxedValue)
         {

@@ -1,5 +1,6 @@
 ﻿using Assets._P3dEngine;
 using Assets._P3dEngine.Settings;
+using Assets._P3dEngine.Shaders;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -27,39 +28,42 @@ namespace Assets._P3dEngine
             public UnityEngine.MeshRenderer MeshRenderer { get; set; }                  
             public UnityEngine.SpriteRenderer SpriteRenderer { get; set; }              
         }
-        
-        [System.Serializable]
-        private class Screen
-        {
-            [field: SerializeField] public Vector3 Position { get; set; }                           // Unity object that contains all unity renderers
-            [field: SerializeField] public int Width { get; set; }                                  // Screen width in pixels
-            [field: SerializeField] public int Height { get; set; }                                 // Screen height in pixels
-            public float AspectRatio { get; private set; }                                          // Calculated from width/height
-            [field: SerializeField] public int PixelsPerUnit { get; set; } = 100;                   // Pixels per Unity unit 
-        }
 
         private RendererSettings _settings;
         [SerializeField] private UnityCamera _unityCamera;
         [SerializeField] private UnityRenderers _unityRenderers;
         [SerializeField] private Screen _screen;
-        
-        private Mesh _mesh;
+
+        [SerializeField] private Pseudo3dShaderData _p3dShaderData;
+        private IShader _shader;
         private List<Material> _materials;
+        private Mesh _mesh;
+        private World _world;
+
 
         public Renderer() { }
 
-        public void OnAwake()
+        public void Initialize(RendererSettings settings)
         {
-            // Initialize Unity Camera
+            /* Initialize settings */
+            SetSettings(settings);
+
+            /* Initialize Unity Camera */
             _unityCamera.Camera = _unityCamera.GameObject.GetComponent<UnityEngine.Camera>();
             _unityCamera.Camera.orthographicSize = (float)_screen.Height / (float)_screen.PixelsPerUnit / 2.0f;
             
-            // Initialize Unity Renderers
+            /* Initialize Unity Renderers */
+            // Init Mesh Filter
             _unityRenderers.MeshFilter = _unityRenderers.GameObject.GetComponentInChildren<UnityEngine.MeshFilter>();
+            
+            // Init Mesh Renderer
             _unityRenderers.MeshRenderer = _unityRenderers.GameObject.GetComponentInChildren<UnityEngine.MeshRenderer>();
-            _unityRenderers.SpriteRenderer = _unityRenderers.GameObject.GetComponentInChildren<UnityEngine.SpriteRenderer>();
+            _unityRenderers.MeshRenderer.gameObject.SetActive(!_settings.UseSpriteRenderer);
 
-            // Create and set road plane sprite for sprite renderer        
+            // Init Sprite Renderer
+            _unityRenderers.SpriteRenderer = _unityRenderers.GameObject.GetComponentInChildren<UnityEngine.SpriteRenderer>();
+            _unityRenderers.SpriteRenderer.gameObject.SetActive(_settings.UseSpriteRenderer);
+            // Create and set road plane sprite for sprite renderer
             Texture2D       roadPlaneTexture    = new(_screen.Width, _screen.Height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
             Sprite          roadPlaneSprite     = Sprite.Create(roadPlaneTexture, new Rect(0, 0, _screen.Width, _screen.Height), new Vector2(0.5f, 0.5f), _screen.PixelsPerUnit);
             roadPlaneSprite.name = "Road Plane Sprite";
@@ -68,16 +72,20 @@ namespace Assets._P3dEngine
 
         internal void OnStart()
         {
-            if (_settings.UseSpriteRenderer)
+            if (_materials[0].shader.name == "Custom/Pseudo3d")
             {
-                _unityRenderers.MeshRenderer.gameObject.SetActive(false);
-                _unityRenderers.SpriteRenderer.gameObject.SetActive(true);
+                Pseudo3dShaderData p3dsd = _p3dShaderData;
+                p3dsd.Material                     = _materials[0];
+                p3dsd.Camera                       = _world.Camera;
+                p3dsd.Screen                       = _screen;
+                p3dsd.UseSpriteRenderer            = _settings.UseSpriteRenderer;
+                _shader = new Pseudo3dShader(p3dsd);
             }
-            else
-            {
-                _unityRenderers.MeshRenderer.gameObject.SetActive(true);
-                _unityRenderers.SpriteRenderer.gameObject.SetActive(false);
-            }
+        }
+
+        internal void UpdateShaderUniforms()
+        {
+            _shader?.SetUniforms();
         }
 
         internal void SetSettings(RendererSettings settings)
@@ -88,18 +96,22 @@ namespace Assets._P3dEngine
         internal void SetMaterials(List<Material> materials)
         {
             _materials = materials;
-            _unityRenderers.MeshRenderer.SetMaterials(materials);
+            _unityRenderers.MeshRenderer.SetMaterials(_materials);
         }
 
         internal void SetMesh(Mesh mesh)
         {
             _mesh = mesh;
-            _unityRenderers.MeshFilter.mesh = mesh;
+            _unityRenderers.MeshFilter.mesh = _mesh;
+        }
+
+        internal void SetWorld(World world)
+        {
+            _world = world;
         }
 
         internal void DrawToSprite()
         {
-            
             RenderTexture saveActiveRenderTexture = RenderTexture.active;
             RenderTexture renderTexture = RenderTexture.GetTemporary(_screen.Width, _screen.Height);
             Graphics.SetRenderTarget(renderTexture);
@@ -119,28 +131,6 @@ namespace Assets._P3dEngine
             GL.PopMatrix();
             Graphics.SetRenderTarget(saveActiveRenderTexture);
             RenderTexture.ReleaseTemporary(renderTexture);
-        }
-
-        internal void Project(RoadPoint point, int roadWidth, Vector3 cameraPosition, float focalLength, int screenWidth, int screenHeight, int pixelsPerUnit, Vector3 positionOffset)
-        {
-            point.View.x = point.World.x - cameraPosition.x;
-            point.View.y = point.World.y - cameraPosition.y;
-            point.View.z = point.World.z - cameraPosition.z;
-
-            point.Project.x = point.View.x   * (focalLength / point.View.z);
-            point.Project.y = point.View.y   * (focalLength / point.View.z);
-            point.Project.z = 0.0f;
-            point.Project.w = (float)roadWidth * (focalLength / point.View.z);   // w component utilized for road width
-
-            point.Transform.x = point.Project.x * ((float)screenWidth  / 2.0f) / (float)pixelsPerUnit + positionOffset.x;
-            point.Transform.y = point.Project.y * ((float)screenHeight / 2.0f) / (float)pixelsPerUnit + positionOffset.y;
-            point.Transform.z = point.Project.z + positionOffset.z;
-            point.Transform.w = point.Project.w * ((float)screenWidth  / 2.0f) / (float)pixelsPerUnit; // w component utilized for road width
-        }
-
-        internal void Project(RoadPoint point, int roadWidth, Vector3 cameraPosition, float focalLength)
-        {
-            Project(point, roadWidth, cameraPosition, focalLength, _screen.Width, _screen.Height, _screen.PixelsPerUnit, _screen.Position);
         }
     }
 }

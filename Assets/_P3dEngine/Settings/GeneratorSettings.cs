@@ -8,8 +8,9 @@ using UnityEngine;
 namespace Assets._P3dEngine.Settings
 {
     [System.Serializable]
-    internal class ApplicationSettings
+    internal class GeneratorSettings
     {
-        [SerializeField] public int TargetFrameRate = -1;
+        [SerializeField] public int WorldUnitsPerUnit    = 100;
+        [SerializeField] public int DrawDistance         = 200;
     }
 }

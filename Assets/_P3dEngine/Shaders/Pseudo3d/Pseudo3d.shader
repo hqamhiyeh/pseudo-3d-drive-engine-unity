@@ -1,4 +1,4 @@
-Shader "Custom/Pseudo3D"
+Shader "Custom/Pseudo3d"
 {
     Properties
     {
@@ -20,7 +20,7 @@ Shader "Custom/Pseudo3D"
         _Near    ( "Near"   , Range( 0.1,  100.0) ) = 0.3
         _Far     ( "Far"    , Range( 0.1, 1000.0) ) = 1000.0
 
-        [Header(Viewport Properties)][Space]
+        [Header(Screen Properties)][Space]
         _Width  ( "Width" , Integer ) = 1920
         _Height ( "Height", Integer ) = 1080
         _PPU    ( "PPU"   , Integer ) = 100
@@ -64,7 +64,7 @@ Shader "Custom/Pseudo3D"
             // transformation matrices set via script
             float4x4 _View;
             float4x4 _Perspective;
-            float4x4 _Viewport;
+            float4x4 _Screen;
 
             v2f vert (appdata v)
             {
@@ -78,7 +78,7 @@ Shader "Custom/Pseudo3D"
                 
                 transform = mul(_View       , transform);
                 transform = mul(_Perspective, transform);
-                transform = mul(_Viewport   , transform);
+                transform = mul(_Screen     , transform);
                 
                 v.vertex = mul(transform,v.vertex);
                 v.vertex = mul(UNITY_MATRIX_M,v.vertex);

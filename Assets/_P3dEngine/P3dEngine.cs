@@ -4,185 +4,148 @@ using Assets._P3dEngine;
 using Assets._P3dEngine.Settings;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Runtime.CompilerServices;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor")]
 
-public class P3dEngine : MonoBehaviour
+internal interface IP3dEngineEditor
 {
+    enum EditorValuesGroup
+    {
+        All,
+        Camera
+    }
+
+    void ApplyEditorValues(EditorValuesGroup editorValuesGroup);
+}
+
+public class P3dEngine : MonoBehaviour, IP3dEngineEditor
+{
+    private interface IEngineSettings
+    {
+        void SetApplicationSettings(ApplicationSettings settings);
+    }
+
     [System.Serializable]
-    private class EngineSettings
+    private class EngineSettings : IEngineSettings
     {
         [field: SerializeField] public ApplicationSettings ApplicationSettings  { get; private set; }
+        [field: SerializeField] public GeneratorSettings GeneratorSettings      { get; private set; }
         [field: SerializeField] public RendererSettings RendererSettings        { get; private set; }
+
+        public void SetApplicationSettings(ApplicationSettings applicationSettings)
+        {
+            ApplicationSettings = applicationSettings;
+        }
     }
 
     [SerializeField] private EngineSettings _settings;
-    [field: SerializeField] internal Assets._P3dEngine.Renderer Renderer { get; private set; }
-    [field: SerializeField] internal Assets._P3dEngine.Camera Camera { get; private set; }
+    [SerializeField] private PrototypeMaterials _prototypeMaterials;
+    [SerializeField] private Generator _generator;
+    [SerializeField] private Assets._P3dEngine.Renderer _renderer;
+    [field: SerializeField] internal World World { get; private set; }
     
-
-    [System.Serializable]
-    private class CpuMaterials
-    {
-        [SerializeField] public Material RoadMaterialDark;
-        [SerializeField] public Material RoadMaterialLight;
-    }
-
-    [SerializeField] private CpuMaterials _cpuMaterials;
-    
-    [System.Serializable]
-    private class GpuMaterials
-    {
-        [SerializeField] public Material PrototypeMaterial;
-    }
-    
-    [SerializeField] private GpuMaterials _gpuMaterials;
-    
-    private Road _road = new(200, 500, 2000);                           
-    private MeshBuilder _meshBuilder;                                   
-    private Mesh _mesh;                                                 
+    private Mesh _mesh;
     private List<Material> _materials;
 
     // Awake is called when the script instance is being loaded
     void Awake()
     {
-        SetSettings();
+        ApplyEditorValues();
+        ApplyApplicationSettings();
 
-        Renderer.OnAwake();
-        Camera.OnAwake();
+        // Initialize empty mesh
+        _mesh = new Mesh() { indexFormat = IndexFormat.UInt16 };
 
         // Set up materials
-        _materials = new List<Material>();
 #if PROJECT_MESH_WITH_CPU
-        GetComponent<Shader>().enabled = false;
-        _materials.Add(_cpuMaterials.RoadMaterialDark);
-        _materials.Add(_cpuMaterials.RoadMaterialLight);
+        _materials = new List<Material>();
+        _materials.Add(_prototypeMaterials.Cpu.RoadDark);
+        _materials.Add(_prototypeMaterials.Cpu.RoadLight);
 #else
-        _materials.Add(_gpuMaterials.PrototypeMaterial);
+        _materials = new List<Material>();
+        _materials.Add(_prototypeMaterials.Gpu.CustomPseudo3d);
 #endif
 
-        // Initialize empty mesh & builder
-        _mesh = new Mesh() { indexFormat = IndexFormat.UInt16 };
-        _meshBuilder = new MeshBuilder(_materials.Count);
+        // Set up generator
+        _generator.Initialize(_settings.GeneratorSettings, _materials.Count);
+        _generator.SetMesh(_mesh);
+        _generator.SetWorld(World);
+        _generator.GenerateWorld();
 
-        // Set up mesh & materials on renderer
-        Renderer.SetMaterials(_materials);
-        Renderer.SetMesh(_mesh);
+        // Set up renderer
+        _renderer.Initialize(_settings.RendererSettings);
+        _renderer.SetMaterials(_materials);
+        _renderer.SetMesh(_mesh);
+        _renderer.SetWorld(World);
+        
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        Renderer.OnStart();
+        _renderer.OnStart();
     }
 
     // FixedUpdate is called every fixed framerate frame
-    private void FixedUpdate()
+    void FixedUpdate()
     {
     }
 
     // Update is called once per frame
     void Update()
     {
-        //if (Input.GetKey("w"))
-        //    Camera.Position.Set(Camera.Position.x, Camera.Position.y, Camera.Position.z + 6);
-        //if (Input.GetKey("s"))
-        //    Camera.Position.Set(Camera.Position.x, Camera.Position.y, Camera.Position.z - 6);
+        ProcessInput();
 
 #if PROJECT_MESH_WITH_CPU
         GenerateProjectedMesh();
 #else
-        GenerateMesh();
+        _generator.GenerateMesh();
+        _renderer.UpdateShaderUniforms();
 #endif
-
     }
 
     // OnRenderObject is called after camera has rendered the scene
-    private void OnRenderObject()
+    void OnRenderObject()
     {
         if (_settings.RendererSettings.UseSpriteRenderer)
-            Renderer.DrawToSprite();
+            _renderer.DrawToSprite();
     }
 
-    void SetSettings()
+    private void ProcessInput()
     {
-        SetApplicationSettings();
-        Renderer.SetSettings(_settings.RendererSettings);
+        if (Input.GetKey("w"))
+            World.Camera.Position.Set(World.Camera.Position.x, World.Camera.Position.y, World.Camera.Position.z + 6);
+        if (Input.GetKey("s"))
+            World.Camera.Position.Set(World.Camera.Position.x, World.Camera.Position.y, World.Camera.Position.z - 6);
     }
 
-    void SetApplicationSettings()
+    private void ApplyApplicationSettings()
     {
         Application.targetFrameRate = _settings.ApplicationSettings.TargetFrameRate;
     }
 
-    void GenerateMesh()
+    private void SetApplicationSettings(ApplicationSettings applicationSettings)
     {
-        _mesh.Clear();
-        _meshBuilder.ResetOffsets();
-
-        int startPointIndex = (int)Math.Floor((double)Camera.Position.z / (double)_road.SegmentLength);
-        int drawDistance = _settings.ApplicationSettings.DrawDistance;
-        int worldUnitsPerUnit = _settings.ApplicationSettings.WorldUnitsPerUnit;
-        for (int n = 0, i = startPointIndex; n < drawDistance && (i + 1) < _road.Points.Count; n++, i++)
-        {
-            _meshBuilder.AddVertex(_road[i    ].World.x - (_road.Width / 2.0f) / worldUnitsPerUnit, _road[i    ].World.y / worldUnitsPerUnit, _road[i    ].World.z / worldUnitsPerUnit);
-            _meshBuilder.AddVertex(_road[i    ].World.x + (_road.Width / 2.0f) / worldUnitsPerUnit, _road[i    ].World.y / worldUnitsPerUnit, _road[i    ].World.z / worldUnitsPerUnit);
-            _meshBuilder.AddVertex(_road[i + 1].World.x - (_road.Width / 2.0f) / worldUnitsPerUnit, _road[i + 1].World.y / worldUnitsPerUnit, _road[i + 1].World.z / worldUnitsPerUnit);
-            _meshBuilder.AddVertex(_road[i + 1].World.x + (_road.Width / 2.0f) / worldUnitsPerUnit, _road[i + 1].World.y / worldUnitsPerUnit, _road[i + 1].World.z / worldUnitsPerUnit);
-
-            _meshBuilder.AddUV(0, 0);
-            _meshBuilder.AddUV(1, 0);
-            _meshBuilder.AddUV(0, 1);
-            _meshBuilder.AddUV(1, 1);
-
-            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-            _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-
-            _meshBuilder.AddTriangle(n * 4    , n * 4 + 2, n * 4 + 1);
-            _meshBuilder.AddTriangle(n * 4 + 1, n * 4 + 2, n * 4 + 3);
-        }
-
-        _meshBuilder.ToMesh(_mesh);
+        _settings.SetApplicationSettings(applicationSettings);
+        ApplyApplicationSettings();
     }
 
-    //void GenerateProjectedMesh()
-    //{
-    //    _mesh.Clear();
-    //    _meshBuilder.ResetOffsets();
+    private void ApplyEditorValues()
+    {
+        ((IP3dEngineEditor)this).ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.All);
+    }
 
-    //    int startPointIndex = (int)Math.Floor((double)Camera.Position.z / (double)_road.SegmentLength);
-    //    int drawDistance = _settings._applicationSettings.DrawDistance;
-    //    int worldUnitsPerUnit = _settings._applicationSettings.WorldUnitsPerUnit;
-    //    for (int n = 0, i = startPointIndex; n < drawDistance && (i + 1) < _road.Points.Count; n++, i++)
-    //    {
-    //        Renderer.Project(_road[i    ], _road.Width, Camera.Position, Camera.FocalLength, Viewport.Width, Viewport.Height, Viewport.PPU, _useSpriteRenderer == true ? Viewport.Position : Vector3.zero);
-    //        Renderer.Project(_road[i + 1], _road.Width, Camera.Position, Camera.FocalLength, Viewport.Width, Viewport.Height, Viewport.PPU, _useSpriteRenderer == true ? Viewport.Position : Vector3.zero);
+    void IP3dEngineEditor.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup editorValuesGroup)
+    {
+        bool all = editorValuesGroup == IP3dEngineEditor.EditorValuesGroup.All;
 
-    //        _meshBuilder.AddVertex(_road[i    ].Transform.x - (_road[i    ].Transform.w / 2.0f), _road[i    ].Transform.y, _road[i    ].Transform.z);
-    //        _meshBuilder.AddVertex(_road[i    ].Transform.x + (_road[i    ].Transform.w / 2.0f), _road[i    ].Transform.y, _road[i    ].Transform.z);
-    //        _meshBuilder.AddVertex(_road[i + 1].Transform.x - (_road[i + 1].Transform.w / 2.0f), _road[i + 1].Transform.y, _road[i + 1].Transform.z);
-    //        _meshBuilder.AddVertex(_road[i + 1].Transform.x + (_road[i + 1].Transform.w / 2.0f), _road[i + 1].Transform.y, _road[i + 1].Transform.z);
-
-    //        _meshBuilder.AddUV(0, (i) % 2 == 0 ? 0 : 1);
-    //        _meshBuilder.AddUV(1, (i) % 2 == 0 ? 0 : 1);
-    //        _meshBuilder.AddUV((_meshBuilder.GetVertex(n * 4 + 2).x - _meshBuilder.GetVertex(n * 4).x) / (_meshBuilder.GetVertex(n * 4 + 1).x - _meshBuilder.GetVertex(n * 4).x), (i + 1) % 2 == 0 ? 0 : 1);
-    //        _meshBuilder.AddUV((_meshBuilder.GetVertex(n * 4 + 3).x - _meshBuilder.GetVertex(n * 4).x) / (_meshBuilder.GetVertex(n * 4 + 1).x - _meshBuilder.GetVertex(n * 4).x), (i + 1) % 2 == 0 ? 0 : 1);
-
-    //        _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-    //        _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-    //        _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-    //        _meshBuilder.AddNormal(Vector3.back.x, Vector3.back.y, Vector3.back.z);
-
-    //        _meshBuilder.AddTriangle(n * 4, n * 4 + 2, n * 4 + 1, i % 2 == 0 ? 0 : 1);
-    //        _meshBuilder.AddTriangle(n * 4 + 1, n * 4 + 2, n * 4 + 3, i % 2 == 0 ? 0 : 1);
-    //    }
-
-    //    _meshBuilder.ToMesh(_mesh);
-    //}
-
+        if (all || editorValuesGroup == IP3dEngineEditor.EditorValuesGroup.Camera)
+            World.Camera.ApplyEditorValues();
+    }
 }
+
