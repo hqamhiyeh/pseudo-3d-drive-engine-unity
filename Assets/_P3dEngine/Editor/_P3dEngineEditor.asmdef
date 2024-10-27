@@ -1,0 +1,16 @@
+{
+    "name": "P3dEngineEditor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d4deef8c770d6aa44b1c105551b39e5b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

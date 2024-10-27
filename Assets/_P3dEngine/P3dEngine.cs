@@ -10,7 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[assembly: InternalsVisibleTo("Assembly-CSharp-Editor")]
+[assembly: InternalsVisibleTo("P3dEngineEditor")]
 
 internal interface IP3dEngineEditor
 {
