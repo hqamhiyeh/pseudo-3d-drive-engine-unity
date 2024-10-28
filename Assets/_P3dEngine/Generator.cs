@@ -67,7 +67,8 @@ namespace Assets._P3dEngine
             _mesh.Clear();
             _meshBuilder.ResetOffsets();
 
-            int startPointIndex = (int)Math.Floor((double)_world.Camera.Position.z / (double)_world.Road.SegmentLength);
+            double cameraPosition = (double)_world.Camera.Position.z;
+            int startPointIndex = (int)Math.Floor( (cameraPosition >= 0 ? cameraPosition : 0) / (double)_world.Road.SegmentLength );
             int drawDistance = _settings.DrawDistance;
             int worldUnitsPerUnit = _settings.WorldUnitsPerUnit;
             for (int n = 0, i = startPointIndex; n < drawDistance && (i + 1) < _world.Road.Points.Count; n++, i++)
