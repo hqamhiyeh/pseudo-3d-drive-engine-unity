@@ -7,7 +7,7 @@ public class P3dEngineEditor : Editor
 {
     private IP3dEngineEditor _driveEngine;
     private SerializedProperty _sp_Renderer;
-    private SerializedProperty _sp_Renderer__unityRenderers_GameObject;
+    private SerializedProperty _sp_Renderer__unityDisplay_GameObject;
     private SerializedProperty _sp_Renderer__screen_Position;
     private SerializedProperty _sp_Camera__FOV;
 
@@ -20,9 +20,9 @@ public class P3dEngineEditor : Editor
             serializedObject
             .FindProperty("_renderer");
 
-        _sp_Renderer__unityRenderers_GameObject =
+        _sp_Renderer__unityDisplay_GameObject =
             _sp_Renderer
-            .FindPropertyRelative("_unityRenderers")
+            .FindPropertyRelative("_unityDisplay")
             .FindPropertyRelative("<GameObject>k__BackingField");
 
         _sp_Renderer__screen_Position =
@@ -50,16 +50,16 @@ public class P3dEngineEditor : Editor
         serializedObject.Update();
 
         // Get new values
-        Vector3 new__unityRenderers_GameObject_position = _sp_Renderer__unityRenderers_GameObject.objectReferenceValue != null ? ((GameObject)_sp_Renderer__unityRenderers_GameObject.objectReferenceValue).GetComponent<Transform>().position : Vector3.zero;
+        Vector3 new__unityDisplay_GameObject_position = _sp_Renderer__unityDisplay_GameObject.objectReferenceValue != null ? ((GameObject)_sp_Renderer__unityDisplay_GameObject.objectReferenceValue).GetComponent<Transform>().position : Vector3.zero;
 
         // Check if values have changed
         if (previous__FOV != _sp_Camera__FOV.intValue)
         {
             _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.Camera);
         }
-        if (new__unityRenderers_GameObject_position != (Vector3)_sp_Renderer__screen_Position.boxedValue)
+        if (new__unityDisplay_GameObject_position != (Vector3)_sp_Renderer__screen_Position.boxedValue)
         {
-            _sp_Renderer__screen_Position.boxedValue = new__unityRenderers_GameObject_position;
+            _sp_Renderer__screen_Position.boxedValue = new__unityDisplay_GameObject_position;
         }
 
         serializedObject.ApplyModifiedProperties();

@@ -17,11 +17,11 @@ namespace Assets._P3dEngine
         {
             [field: SerializeField] public GameObject GameObject { get; private set; }
             public UnityEngine.Camera Camera { get; set; }                                          // Unity camera that's pointed at screen
-            public PixelPerfectCamera PixelPerfectCamera { get; set; }                  
+            public PixelPerfectCamera PixelPerfectCamera { get; set; }
         }
 
         [System.Serializable]
-        private class UnityRenderers
+        private class UnityDisplay
         {
             [field: SerializeField] public GameObject GameObject { get; private set; }
             public UnityEngine.MeshFilter MeshFilter { get; set; }                      
@@ -31,7 +31,7 @@ namespace Assets._P3dEngine
 
         private RendererSettings _settings;
         [SerializeField] private UnityCamera _unityCamera;
-        [SerializeField] private UnityRenderers _unityRenderers;
+        [SerializeField] private UnityDisplay _unityDisplay;
         [SerializeField] private Screen _screen;
 
         [SerializeField] private Pseudo3dShaderData _p3dShaderData;
@@ -54,20 +54,22 @@ namespace Assets._P3dEngine
             
             /* Initialize Unity Renderers */
             // Init Mesh Filter
-            _unityRenderers.MeshFilter = _unityRenderers.GameObject.GetComponentInChildren<UnityEngine.MeshFilter>();
+            _unityDisplay.MeshFilter = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.MeshFilter>();
             
             // Init Mesh Renderer
-            _unityRenderers.MeshRenderer = _unityRenderers.GameObject.GetComponentInChildren<UnityEngine.MeshRenderer>();
-            _unityRenderers.MeshRenderer.gameObject.SetActive(!_settings.UseSpriteRenderer);
+            _unityDisplay.MeshRenderer = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.MeshRenderer>();
+            _unityDisplay.MeshRenderer.enabled = !_settings.UseSpriteRenderer;
 
             // Init Sprite Renderer
-            _unityRenderers.SpriteRenderer = _unityRenderers.GameObject.GetComponentInChildren<UnityEngine.SpriteRenderer>();
-            _unityRenderers.SpriteRenderer.gameObject.SetActive(_settings.UseSpriteRenderer);
+            _unityDisplay.SpriteRenderer = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.SpriteRenderer>();
+            //_unityRenderers.SpriteRenderer.gameObject.SetActive(_settings.UseSpriteRenderer);
+            _unityDisplay.SpriteRenderer.enabled = _settings.UseSpriteRenderer;
+
             // Create and set road plane sprite for sprite renderer
             Texture2D       roadPlaneTexture    = new(_screen.Width, _screen.Height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
             Sprite          roadPlaneSprite     = Sprite.Create(roadPlaneTexture, new Rect(0, 0, _screen.Width, _screen.Height), new Vector2(0.5f, 0.5f), _screen.PixelsPerUnit);
             roadPlaneSprite.name = "Road Plane Sprite";
-            _unityRenderers.SpriteRenderer.sprite = roadPlaneSprite;
+            _unityDisplay.SpriteRenderer.sprite = roadPlaneSprite;
         }
 
         internal void OnStart()
@@ -96,13 +98,13 @@ namespace Assets._P3dEngine
         internal void SetMaterials(List<Material> materials)
         {
             _materials = materials;
-            _unityRenderers.MeshRenderer.SetMaterials(_materials);
+            _unityDisplay.MeshRenderer.SetMaterials(_materials);
         }
 
         internal void SetMesh(Mesh mesh)
         {
             _mesh = mesh;
-            _unityRenderers.MeshFilter.mesh = _mesh;
+            _unityDisplay.MeshFilter.mesh = _mesh;
         }
 
         internal void SetWorld(World world)
@@ -126,7 +128,7 @@ namespace Assets._P3dEngine
                 material.SetPass(0);
                 Graphics.DrawMeshNow(_mesh, Matrix4x4.identity, submeshIndex);
             }
-            Graphics.CopyTexture(renderTexture, _unityRenderers.SpriteRenderer.sprite.texture);
+            Graphics.CopyTexture(renderTexture, _unityDisplay.SpriteRenderer.sprite.texture);
 
             GL.PopMatrix();
             Graphics.SetRenderTarget(saveActiveRenderTexture);

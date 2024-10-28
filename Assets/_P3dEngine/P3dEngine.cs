@@ -60,6 +60,7 @@ public class P3dEngine : MonoBehaviour, IP3dEngineEditor
 
         // Initialize empty mesh
         _mesh = new Mesh() { indexFormat = IndexFormat.UInt16 };
+        _mesh.name = "Road";
 
         // Set up materials
 #if PROJECT_MESH_WITH_CPU
@@ -99,6 +100,7 @@ public class P3dEngine : MonoBehaviour, IP3dEngineEditor
     // Update is called once per frame
     void Update()
     {
+        
         ProcessInput();
 
 #if PROJECT_MESH_WITH_CPU
@@ -122,6 +124,11 @@ public class P3dEngine : MonoBehaviour, IP3dEngineEditor
             World.Camera.Position.Set(World.Camera.Position.x, World.Camera.Position.y, World.Camera.Position.z + 6);
         if (Input.GetKey("s"))
             World.Camera.Position.Set(World.Camera.Position.x, World.Camera.Position.y, World.Camera.Position.z - 6);
+    }
+
+    private void PollSettings()
+    {
+
     }
 
     private void ApplyApplicationSettings()
