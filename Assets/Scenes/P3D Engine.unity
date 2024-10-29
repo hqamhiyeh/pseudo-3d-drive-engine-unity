@@ -350,7 +350,11 @@ MonoBehaviour:
       <GameObject>k__BackingField: {fileID: 2017140178}
     _unityDisplay:
       <GameObject>k__BackingField: {fileID: 2095561413}
-    _screen:
+    _fullWindow:
+      <Position>k__BackingField: {x: 0, y: 0, z: 0}
+      <Width>k__BackingField: 1920
+      <Height>k__BackingField: 1080
+    _gameWindow:
       <Position>k__BackingField: {x: 40, y: 0, z: 0}
       <Width>k__BackingField: 1920
       <Height>k__BackingField: 1080

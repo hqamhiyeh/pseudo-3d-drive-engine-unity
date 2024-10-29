@@ -29,6 +29,7 @@ namespace Assets._P3dEngine
         private RendererSettings _settings;
         [SerializeField] private UnityCamera _unityCamera;
         [SerializeField] private UnityDisplay _unityDisplay;
+        [SerializeField] private Window _fullWindow;
         [SerializeField] private Window _gameWindow;
 
         [SerializeField] private Pseudo3dShaderData _p3dShaderData;
@@ -84,7 +85,7 @@ namespace Assets._P3dEngine
 
         private void ApplySettings()
         {
-            _unityCamera.Camera.orthographicSize = (float)_gameWindow.Height / (float)_settings.PixelsPerUnit / 2.0f;
+            _unityCamera.Camera.orthographicSize = (float)_fullWindow.Height / (float)_settings.PixelsPerUnit / 2.0f;
             _unityDisplay.MeshRenderer.enabled = !_settings.UseSpriteRenderer;
             _unityDisplay.SpriteRenderer.enabled = _settings.UseSpriteRenderer;
         }
