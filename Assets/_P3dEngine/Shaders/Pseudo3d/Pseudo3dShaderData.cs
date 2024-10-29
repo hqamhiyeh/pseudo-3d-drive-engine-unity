@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets._P3dEngine.Settings;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,11 +24,11 @@ namespace Assets._P3dEngine.Shaders
         [NonSerialized]  public Material Material;
         [NonSerialized]  public Camera Camera;
         [NonSerialized]  public Screen Screen;
+        [NonSerialized]  public RendererSettings RendererSettings;
         [SerializeField] public ProjectionMatrix ProjectionMatrix;
         [SerializeField] public bool GetGpuProjectionMatrix;
         [SerializeField] public bool ToRenderTexture;
         [SerializeField] public bool EnableProjectionTransform;
         [SerializeField] public bool EnableViewportTransform;
-        [NonSerialized]  public bool UseSpriteRenderer;
     }
 }

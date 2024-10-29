@@ -5,12 +5,22 @@ using UnityEngine;
 [CustomEditor(typeof(P3dEngine))]
 public class P3dEngineEditor : Editor
 {
+    /*
+     * sp   ->          serialized property
+     * rsp  -> relative serialized property
+     * spv  ->          serialized property value
+     * sprv -> relative serialized property value
+     */
+
     private IP3dEngineEditor _driveEngine;
     private SerializedProperty _sp_Renderer;
     private SerializedProperty _sp_Renderer__unityDisplay_GameObject;
     private SerializedProperty _sp_Renderer__screen_Position;
     private SerializedProperty _sp_World_Camera__FOV;
-    private SerializedProperty _sp__settings_RendererSettings__UseSpriteRenderer;
+
+    private SerializedProperty _sp__settings_RendererSettings;
+    private SerializedProperty _rsp__PixelsPerUnit;
+    private SerializedProperty _rsp__UseSpriteRenderer;
 
     void OnEnable() {
         // Get 'DriveEngine' script component
@@ -37,10 +47,17 @@ public class P3dEngineEditor : Editor
             .FindPropertyRelative("<Camera>k__BackingField")
             .FindPropertyRelative("_FOV");
 
-        _sp__settings_RendererSettings__UseSpriteRenderer =
+        _sp__settings_RendererSettings =
             serializedObject
             .FindProperty("_settings")
-            .FindPropertyRelative("<RendererSettings>k__BackingField")
+            .FindPropertyRelative("<RendererSettings>k__BackingField");
+
+        _rsp__PixelsPerUnit =
+            _sp__settings_RendererSettings
+            .FindPropertyRelative("_PixelsPerUnit");
+
+        _rsp__UseSpriteRenderer =
+            _sp__settings_RendererSettings
             .FindPropertyRelative("_UseSpriteRenderer");
 
         //PrintSerializedProperties();
@@ -49,7 +66,8 @@ public class P3dEngineEditor : Editor
     public override void OnInspectorGUI() {
         // Get values before change
         int previous_World_Camera__FOV = _sp_World_Camera__FOV.intValue;
-        bool previous__UseSpriteRenderer = _sp__settings_RendererSettings__UseSpriteRenderer.boolValue;
+        int previous__PixelsPerUnit = _rsp__PixelsPerUnit.intValue;
+        bool previous__UseSpriteRenderer = _rsp__UseSpriteRenderer.boolValue;
 
         // Make all the public and serialized fields visible in Inspector
         base.OnInspectorGUI();
@@ -65,7 +83,11 @@ public class P3dEngineEditor : Editor
         {
             _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.Camera);
         }
-        if (previous__UseSpriteRenderer != _sp__settings_RendererSettings__UseSpriteRenderer.boolValue)
+        if (previous__PixelsPerUnit != _rsp__PixelsPerUnit.intValue)
+        {
+            _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.RendererSettings);
+        }
+        if (previous__UseSpriteRenderer != _rsp__UseSpriteRenderer.boolValue)
         {
             _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.RendererSettings);
         }

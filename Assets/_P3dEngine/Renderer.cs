@@ -41,26 +41,25 @@ namespace Assets._P3dEngine
 
         public void Initialize(RendererSettings settings)
         {
-            /* Initialize Unity Camera */
+            /* Get unity components */
             _unityCamera.Camera = _unityCamera.GameObject.GetComponent<UnityEngine.Camera>();
-            _unityCamera.Camera.orthographicSize = (float)_screen.Height / (float)_screen.PixelsPerUnit / 2.0f;
-            
-            /* Initialize Unity Display */
             _unityDisplay.MeshFilter = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.MeshFilter>();
             _unityDisplay.MeshRenderer = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.MeshRenderer>();
             _unityDisplay.SpriteRenderer = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.SpriteRenderer>();
-            InitSpriteRenderer();
 
             /* Initialize settings */
             SetSettings(settings);
             _settings.SettingChanged += RefreshSettings;
+
+            /* Initialize components */
+            InitSpriteRenderer();
         }
 
         private void InitSpriteRenderer()
         {
             // Create and set road plane sprite for sprite renderer
             Texture2D       roadPlaneTexture    = new(_screen.Width, _screen.Height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
-            Sprite          roadPlaneSprite     = Sprite.Create(roadPlaneTexture, new Rect(0, 0, _screen.Width, _screen.Height), new Vector2(0.5f, 0.5f), _screen.PixelsPerUnit);
+            Sprite          roadPlaneSprite     = Sprite.Create(roadPlaneTexture, new Rect(0, 0, _screen.Width, _screen.Height), new Vector2(0.5f, 0.5f), _settings.PixelsPerUnit);
             roadPlaneSprite.name = "Road Plane Sprite";
             _unityDisplay.SpriteRenderer.sprite = roadPlaneSprite;
         }
@@ -70,10 +69,10 @@ namespace Assets._P3dEngine
             if (_materials[0].shader.name == "Custom/Pseudo3d")
             {
                 Pseudo3dShaderData p3dsd = _p3dShaderData;
-                p3dsd.Material                     = _materials[0];
-                p3dsd.Camera                       = _world.Camera;
-                p3dsd.Screen                       = _screen;
-                p3dsd.UseSpriteRenderer            = _settings.UseSpriteRenderer;
+                p3dsd.Material          = _materials[0];
+                p3dsd.Camera            = _world.Camera;
+                p3dsd.Screen            = _screen;
+                p3dsd.RendererSettings  = _settings;
                 _shader = new Pseudo3dShader(p3dsd);
             }
         }
@@ -85,6 +84,7 @@ namespace Assets._P3dEngine
 
         private void ApplySettings()
         {
+            _unityCamera.Camera.orthographicSize = (float)_screen.Height / (float)_settings.PixelsPerUnit / 2.0f;
             _unityDisplay.MeshRenderer.enabled = !_settings.UseSpriteRenderer;
             _unityDisplay.SpriteRenderer.enabled = _settings.UseSpriteRenderer;
         }

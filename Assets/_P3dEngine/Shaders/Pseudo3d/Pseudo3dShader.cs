@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets._P3dEngine.Settings;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +16,7 @@ namespace Assets._P3dEngine.Shaders
         Material _material;
         Camera _camera;
         Screen _screen;
+        RendererSettings _settings;
 
         Vector3 _cameraPosition;
         int     _cameraFov;
@@ -24,14 +26,15 @@ namespace Assets._P3dEngine.Shaders
         int     _screenWidth;
         int     _screenHeight;
         float   _screenAspectRatio;
-        int     _screenPixelsPerUnit;
+
+        int     _settingsPixelsPerUnit;
+        bool    _settingsUseSpriteRenderer;
 
         ProjectionMatrix _projectionMatrix  = ProjectionMatrix.perspective_unity_flip;
         bool _getGpuProjectionMatrix        = true;
         bool _toRenderTexture               = false;
         bool _enableProjectionTransform     = true;
         bool _enableScreenTransform       = true;
-        bool _useSpriteRenderer;
 
         // Transformation matrices
         UnityEngine.Matrix4x4 _mIdentity;
@@ -77,9 +80,10 @@ namespace Assets._P3dEngine.Shaders
 
         private void Initialize()
         {
-            _material   = _data.Material;
-            _screen     = _data.Screen;
-            _camera     = _data.Camera;
+            _material           = _data.Material;
+            _screen             = _data.Screen;
+            _camera             = _data.Camera;
+            _settings   = _data.RendererSettings;
 
             _mIdentity   = UnityEngine.Matrix4x4.identity;
             _mView       = UnityEngine.Matrix4x4.identity;
@@ -113,13 +117,13 @@ namespace Assets._P3dEngine.Shaders
             _screenWidth                = _screen.Width;
             _screenHeight               = _screen.Height;
             _screenAspectRatio          = _screen.AspectRatio;
-            _screenPixelsPerUnit        = _screen.PixelsPerUnit;
+            _settingsPixelsPerUnit      = _settings.PixelsPerUnit;
+            _settingsUseSpriteRenderer  = _settings.UseSpriteRenderer;
             _projectionMatrix           = _data.ProjectionMatrix;
             _getGpuProjectionMatrix     = _data.GetGpuProjectionMatrix;
             _toRenderTexture            = _data.ToRenderTexture;
             _enableProjectionTransform  = _data.EnableProjectionTransform;
-            _enableScreenTransform    = _data.EnableViewportTransform;
-            _useSpriteRenderer          = _data.UseSpriteRenderer;
+            _enableScreenTransform      = _data.EnableViewportTransform;
 
             // View Matrix
             cameraX = _cameraPosition.x / 100.0f;
@@ -239,12 +243,12 @@ namespace Assets._P3dEngine.Shaders
             // Screen Matrix (Separate into viewport & screen matrices, viewport is normalized)
             width       = _screenWidth;
             height      = _screenHeight;
-            ppu         = _screenPixelsPerUnit;
+            ppu         = _settingsPixelsPerUnit;
             position    = (UnityEngine.Vector4) _screenPosition;
             position.w  = 1.0f;
             _mScreen.m00 = (width  / 2.0f) / ppu;
             _mScreen.m11 = (height / 2.0f) / ppu;
-            _mScreen.SetColumn(3, _useSpriteRenderer ? position : _mIdentity.GetColumn(3));
+            _mScreen.SetColumn(3, _settingsUseSpriteRenderer ? position : _mIdentity.GetColumn(3));
             _material.SetMatrix("_Screen", _enableScreenTransform == true ? _mScreen : _mIdentity);
         }
     }

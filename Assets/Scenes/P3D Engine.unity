@@ -336,7 +336,8 @@ MonoBehaviour:
       WorldUnitsPerUnit: 100
       DrawDistance: 200
     <RendererSettings>k__BackingField:
-      <UseSpriteRenderer>k__BackingField: 1
+      _PixelsPerUnit: 100
+      _UseSpriteRenderer: 1
   _prototypeMaterials:
     Cpu:
       RoadDark: {fileID: 2100000, guid: db7b8400b1a0d6f47a32ebc337873fb9, type: 2}
@@ -353,7 +354,6 @@ MonoBehaviour:
       <Position>k__BackingField: {x: 40, y: 0, z: 0}
       <Width>k__BackingField: 1920
       <Height>k__BackingField: 1080
-      <PixelsPerUnit>k__BackingField: 100
     _p3dShaderData:
       ProjectionMatrix: 1
       GetGpuProjectionMatrix: 1
