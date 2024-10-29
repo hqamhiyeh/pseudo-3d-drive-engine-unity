@@ -1,9 +1,6 @@
-﻿using Assets._P3dEngine;
-using Assets._P3dEngine.Settings;
+﻿using Assets._P3dEngine.Settings;
 using Assets._P3dEngine.Shaders;
-using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.U2D;
 
@@ -40,31 +37,27 @@ namespace Assets._P3dEngine
         private Mesh _mesh;
         private World _world;
 
-
         public Renderer() { }
 
         public void Initialize(RendererSettings settings)
         {
-            /* Initialize settings */
-            SetSettings(settings);
-
             /* Initialize Unity Camera */
             _unityCamera.Camera = _unityCamera.GameObject.GetComponent<UnityEngine.Camera>();
             _unityCamera.Camera.orthographicSize = (float)_screen.Height / (float)_screen.PixelsPerUnit / 2.0f;
             
-            /* Initialize Unity Renderers */
-            // Init Mesh Filter
+            /* Initialize Unity Display */
             _unityDisplay.MeshFilter = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.MeshFilter>();
-            
-            // Init Mesh Renderer
             _unityDisplay.MeshRenderer = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.MeshRenderer>();
-            _unityDisplay.MeshRenderer.enabled = !_settings.UseSpriteRenderer;
-
-            // Init Sprite Renderer
             _unityDisplay.SpriteRenderer = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.SpriteRenderer>();
-            //_unityRenderers.SpriteRenderer.gameObject.SetActive(_settings.UseSpriteRenderer);
-            _unityDisplay.SpriteRenderer.enabled = _settings.UseSpriteRenderer;
+            InitSpriteRenderer();
 
+            /* Initialize settings */
+            SetSettings(settings);
+            _settings.SettingChanged += RefreshSettings;
+        }
+
+        private void InitSpriteRenderer()
+        {
             // Create and set road plane sprite for sprite renderer
             Texture2D       roadPlaneTexture    = new(_screen.Width, _screen.Height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
             Sprite          roadPlaneSprite     = Sprite.Create(roadPlaneTexture, new Rect(0, 0, _screen.Width, _screen.Height), new Vector2(0.5f, 0.5f), _screen.PixelsPerUnit);
@@ -90,9 +83,22 @@ namespace Assets._P3dEngine
             _shader?.SetUniforms();
         }
 
+        private void ApplySettings()
+        {
+            _unityDisplay.MeshRenderer.enabled = !_settings.UseSpriteRenderer;
+            _unityDisplay.SpriteRenderer.enabled = _settings.UseSpriteRenderer;
+        }
+        
+        private void RefreshSettings()
+        {
+            ApplySettings();
+            Debug.Log("[Renderer] INFO: Settings refreshed.");
+        }
+
         internal void SetSettings(RendererSettings settings)
         {
             _settings = settings;
+            ApplySettings();
         }
 
         internal void SetMaterials(List<Material> materials)

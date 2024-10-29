@@ -17,7 +17,8 @@ internal interface IP3dEngineEditor
     enum EditorValuesGroup
     {
         All,
-        Camera
+        Camera,
+        RendererSettings
     }
 
     void ApplyEditorValues(EditorValuesGroup editorValuesGroup);
@@ -153,6 +154,9 @@ public class P3dEngine : MonoBehaviour, IP3dEngineEditor
 
         if (all || editorValuesGroup == IP3dEngineEditor.EditorValuesGroup.Camera)
             World.Camera.ApplyEditorValues();
+
+        if (all || editorValuesGroup == IP3dEngineEditor.EditorValuesGroup.RendererSettings)
+            _settings.RendererSettings.ApplyEditorValues();
     }
 }
 

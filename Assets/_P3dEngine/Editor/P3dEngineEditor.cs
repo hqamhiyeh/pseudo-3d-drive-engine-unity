@@ -9,7 +9,8 @@ public class P3dEngineEditor : Editor
     private SerializedProperty _sp_Renderer;
     private SerializedProperty _sp_Renderer__unityDisplay_GameObject;
     private SerializedProperty _sp_Renderer__screen_Position;
-    private SerializedProperty _sp_Camera__FOV;
+    private SerializedProperty _sp_World_Camera__FOV;
+    private SerializedProperty _sp__settings_RendererSettings__UseSpriteRenderer;
 
     void OnEnable() {
         // Get 'DriveEngine' script component
@@ -30,18 +31,25 @@ public class P3dEngineEditor : Editor
             .FindPropertyRelative("_screen")
             .FindPropertyRelative("<Position>k__BackingField");
 
-        _sp_Camera__FOV =
+        _sp_World_Camera__FOV =
             serializedObject
             .FindProperty("<World>k__BackingField")
             .FindPropertyRelative("<Camera>k__BackingField")
             .FindPropertyRelative("_FOV");
+
+        _sp__settings_RendererSettings__UseSpriteRenderer =
+            serializedObject
+            .FindProperty("_settings")
+            .FindPropertyRelative("<RendererSettings>k__BackingField")
+            .FindPropertyRelative("_UseSpriteRenderer");
 
         //PrintSerializedProperties();
     }
 
     public override void OnInspectorGUI() {
         // Get values before change
-        int previous__FOV = _sp_Camera__FOV.intValue;
+        int previous_World_Camera__FOV = _sp_World_Camera__FOV.intValue;
+        bool previous__UseSpriteRenderer = _sp__settings_RendererSettings__UseSpriteRenderer.boolValue;
 
         // Make all the public and serialized fields visible in Inspector
         base.OnInspectorGUI();
@@ -53,9 +61,13 @@ public class P3dEngineEditor : Editor
         Vector3 new__unityDisplay_GameObject_position = _sp_Renderer__unityDisplay_GameObject.objectReferenceValue != null ? ((GameObject)_sp_Renderer__unityDisplay_GameObject.objectReferenceValue).GetComponent<Transform>().position : Vector3.zero;
 
         // Check if values have changed
-        if (previous__FOV != _sp_Camera__FOV.intValue)
+        if (previous_World_Camera__FOV != _sp_World_Camera__FOV.intValue)
         {
             _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.Camera);
+        }
+        if (previous__UseSpriteRenderer != _sp__settings_RendererSettings__UseSpriteRenderer.boolValue)
+        {
+            _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.RendererSettings);
         }
         if (new__unityDisplay_GameObject_position != (Vector3)_sp_Renderer__screen_Position.boxedValue)
         {
