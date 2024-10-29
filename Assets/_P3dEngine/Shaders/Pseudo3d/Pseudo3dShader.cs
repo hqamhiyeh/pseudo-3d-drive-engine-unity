@@ -15,17 +15,17 @@ namespace Assets._P3dEngine.Shaders
 
         Material _material;
         Camera _camera;
-        Screen _screen;
+        Window _window;
         RendererSettings _settings;
 
         Vector3 _cameraPosition;
         int     _cameraFov;
         float   _cameraFocalLength;
 
-        Vector3 _screenPosition;
-        int     _screenWidth;
-        int     _screenHeight;
-        float   _screenAspectRatio;
+        Vector3 _windowPosition;
+        int     _windowWidth;
+        int     _windowHeight;
+        float   _windowAspectRatio;
 
         int     _settingsPixelsPerUnit;
         bool    _settingsUseSpriteRenderer;
@@ -81,7 +81,7 @@ namespace Assets._P3dEngine.Shaders
         private void Initialize()
         {
             _material           = _data.Material;
-            _screen             = _data.Screen;
+            _window             = _data.Window;
             _camera             = _data.Camera;
             _settings   = _data.RendererSettings;
 
@@ -113,10 +113,10 @@ namespace Assets._P3dEngine.Shaders
             _cameraPosition             = _camera.Position;
             _cameraFov                  = _camera.FOV;
             _cameraFocalLength          = _camera.FocalLength;
-            _screenPosition             = _screen.Position;
-            _screenWidth                = _screen.Width;
-            _screenHeight               = _screen.Height;
-            _screenAspectRatio          = _screen.AspectRatio;
+            _windowPosition             = _window.Position;
+            _windowWidth                = _window.Width;
+            _windowHeight               = _window.Height;
+            _windowAspectRatio          = _window.AspectRatio;
             _settingsPixelsPerUnit      = _settings.PixelsPerUnit;
             _settingsUseSpriteRenderer  = _settings.UseSpriteRenderer;
             _projectionMatrix           = _data.ProjectionMatrix;
@@ -155,7 +155,7 @@ namespace Assets._P3dEngine.Shaders
 
             // Projection Matrix
             fovy    = _cameraFov;
-            aspect  = (float)_screenWidth / (float)_screenHeight;
+            aspect  = (float)_windowWidth / (float)_windowHeight;
             near    = _material.GetFloat("_Near");
             far     = _material.GetFloat("_Far");
             f = (float)Math.Tan((fovy / 2.0) * (Math.PI / 180.0));
@@ -241,10 +241,10 @@ namespace Assets._P3dEngine.Shaders
             */
 
             // Screen Matrix (Separate into viewport & screen matrices, viewport is normalized)
-            width       = _screenWidth;
-            height      = _screenHeight;
+            width       = _windowWidth;
+            height      = _windowHeight;
             ppu         = _settingsPixelsPerUnit;
-            position    = (UnityEngine.Vector4) _screenPosition;
+            position    = (UnityEngine.Vector4) _windowPosition;
             position.w  = 1.0f;
             _mScreen.m00 = (width  / 2.0f) / ppu;
             _mScreen.m11 = (height / 2.0f) / ppu;

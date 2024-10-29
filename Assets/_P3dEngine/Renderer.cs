@@ -29,7 +29,7 @@ namespace Assets._P3dEngine
         private RendererSettings _settings;
         [SerializeField] private UnityCamera _unityCamera;
         [SerializeField] private UnityDisplay _unityDisplay;
-        [SerializeField] private Screen _screen;
+        [SerializeField] private Window _gameWindow;
 
         [SerializeField] private Pseudo3dShaderData _p3dShaderData;
         private IShader _shader;
@@ -58,8 +58,8 @@ namespace Assets._P3dEngine
         private void InitSpriteRenderer()
         {
             // Create and set road plane sprite for sprite renderer
-            Texture2D       roadPlaneTexture    = new(_screen.Width, _screen.Height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
-            Sprite          roadPlaneSprite     = Sprite.Create(roadPlaneTexture, new Rect(0, 0, _screen.Width, _screen.Height), new Vector2(0.5f, 0.5f), _settings.PixelsPerUnit);
+            Texture2D       roadPlaneTexture    = new(_gameWindow.Width, _gameWindow.Height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            Sprite          roadPlaneSprite     = Sprite.Create(roadPlaneTexture, new Rect(0, 0, _gameWindow.Width, _gameWindow.Height), new Vector2(0.5f, 0.5f), _settings.PixelsPerUnit);
             roadPlaneSprite.name = "Road Plane Sprite";
             _unityDisplay.SpriteRenderer.sprite = roadPlaneSprite;
         }
@@ -71,7 +71,7 @@ namespace Assets._P3dEngine
                 Pseudo3dShaderData p3dsd = _p3dShaderData;
                 p3dsd.Material          = _materials[0];
                 p3dsd.Camera            = _world.Camera;
-                p3dsd.Screen            = _screen;
+                p3dsd.Window            = _gameWindow;
                 p3dsd.RendererSettings  = _settings;
                 _shader = new Pseudo3dShader(p3dsd);
             }
@@ -84,7 +84,7 @@ namespace Assets._P3dEngine
 
         private void ApplySettings()
         {
-            _unityCamera.Camera.orthographicSize = (float)_screen.Height / (float)_settings.PixelsPerUnit / 2.0f;
+            _unityCamera.Camera.orthographicSize = (float)_gameWindow.Height / (float)_settings.PixelsPerUnit / 2.0f;
             _unityDisplay.MeshRenderer.enabled = !_settings.UseSpriteRenderer;
             _unityDisplay.SpriteRenderer.enabled = _settings.UseSpriteRenderer;
         }
@@ -121,7 +121,7 @@ namespace Assets._P3dEngine
         internal void DrawToSprite()
         {
             RenderTexture saveActiveRenderTexture = RenderTexture.active;
-            RenderTexture renderTexture = RenderTexture.GetTemporary(_screen.Width, _screen.Height);
+            RenderTexture renderTexture = RenderTexture.GetTemporary(_gameWindow.Width, _gameWindow.Height);
             Graphics.SetRenderTarget(renderTexture);
 
             GL.Clear(false, true, new Color(0.2f, 0.3f, 0.3f, 1.0f));

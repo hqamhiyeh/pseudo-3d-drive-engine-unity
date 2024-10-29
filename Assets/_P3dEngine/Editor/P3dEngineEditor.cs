@@ -15,7 +15,7 @@ public class P3dEngineEditor : Editor
     private IP3dEngineEditor _driveEngine;
     private SerializedProperty _sp_Renderer;
     private SerializedProperty _sp_Renderer__unityDisplay_GameObject;
-    private SerializedProperty _sp_Renderer__screen_Position;
+    private SerializedProperty _sp_Renderer__gameWindow_Position;
     private SerializedProperty _sp_World_Camera__FOV;
 
     private SerializedProperty _sp__settings_RendererSettings;
@@ -36,9 +36,9 @@ public class P3dEngineEditor : Editor
             .FindPropertyRelative("_unityDisplay")
             .FindPropertyRelative("<GameObject>k__BackingField");
 
-        _sp_Renderer__screen_Position =
+        _sp_Renderer__gameWindow_Position =
             _sp_Renderer
-            .FindPropertyRelative("_screen")
+            .FindPropertyRelative("_gameWindow")
             .FindPropertyRelative("<Position>k__BackingField");
 
         _sp_World_Camera__FOV =
@@ -91,9 +91,9 @@ public class P3dEngineEditor : Editor
         {
             _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.RendererSettings);
         }
-        if (new__unityDisplay_GameObject_position != (Vector3)_sp_Renderer__screen_Position.boxedValue)
+        if (new__unityDisplay_GameObject_position != (Vector3)_sp_Renderer__gameWindow_Position.boxedValue)
         {
-            _sp_Renderer__screen_Position.boxedValue = new__unityDisplay_GameObject_position;
+            _sp_Renderer__gameWindow_Position.boxedValue = new__unityDisplay_GameObject_position;
         }
 
         serializedObject.ApplyModifiedProperties();
