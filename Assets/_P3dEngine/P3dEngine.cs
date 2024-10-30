@@ -26,25 +26,7 @@ internal interface IP3dEngineEditor
 
 public class P3dEngine : MonoBehaviour, IP3dEngineEditor
 {
-    private interface IEngineSettings
-    {
-        void SetApplicationSettings(ApplicationSettings settings);
-    }
-
-    [System.Serializable]
-    private class EngineSettings : IEngineSettings
-    {
-        [field: SerializeField] public ApplicationSettings ApplicationSettings  { get; private set; }
-        [field: SerializeField] public GeneratorSettings GeneratorSettings      { get; private set; }
-        [field: SerializeField] public RendererSettings RendererSettings        { get; private set; }
-
-        public void SetApplicationSettings(ApplicationSettings applicationSettings)
-        {
-            ApplicationSettings = applicationSettings;
-        }
-    }
-
-    [SerializeField] private EngineSettings _settings;
+    [SerializeField] private Settings _settings;
     [SerializeField] private PrototypeMaterials _prototypeMaterials;
     [SerializeField] private Generator _generator;
     [SerializeField] private Assets._P3dEngine.Renderer _renderer;
@@ -74,13 +56,13 @@ public class P3dEngine : MonoBehaviour, IP3dEngineEditor
 #endif
 
         // Set up generator
-        _generator.Initialize(_settings.GeneratorSettings, _materials.Count);
+        _generator.Initialize((IGeneratorSettings)_settings, _materials.Count);
         _generator.SetMesh(_mesh);
         _generator.SetWorld(World);
         _generator.GenerateWorld();
 
         // Set up renderer
-        _renderer.Initialize(_settings.RendererSettings);
+        _renderer.Initialize((IRendererSettings)_settings);
         _renderer.SetMaterials(_materials);
         _renderer.SetMesh(_mesh);
         _renderer.SetWorld(World);
@@ -115,7 +97,7 @@ public class P3dEngine : MonoBehaviour, IP3dEngineEditor
     // OnRenderObject is called after camera has rendered the scene
     void OnRenderObject()
     {
-        if (_settings.RendererSettings.UseSpriteRenderer)
+        if (_settings.UseSpriteRenderer)
             _renderer.DrawToSprite();
     }
 
@@ -134,13 +116,8 @@ public class P3dEngine : MonoBehaviour, IP3dEngineEditor
 
     private void ApplyApplicationSettings()
     {
-        Application.targetFrameRate = _settings.ApplicationSettings.TargetFrameRate;
-    }
-
-    private void SetApplicationSettings(ApplicationSettings applicationSettings)
-    {
-        _settings.SetApplicationSettings(applicationSettings);
-        ApplyApplicationSettings();
+        IApplicationSettings applicationSettings = _settings;
+        Application.targetFrameRate = applicationSettings.TargetFrameRate;
     }
 
     private void ApplyEditorValues()
@@ -156,7 +133,7 @@ public class P3dEngine : MonoBehaviour, IP3dEngineEditor
             World.Camera.ApplyEditorValues();
 
         if (all || editorValuesGroup == IP3dEngineEditor.EditorValuesGroup.RendererSettings)
-            _settings.RendererSettings.ApplyEditorValues();
+            _settings.ApplyEditorValues();
     }
 }
 

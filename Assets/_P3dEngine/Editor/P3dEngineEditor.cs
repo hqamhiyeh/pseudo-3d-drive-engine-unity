@@ -18,7 +18,7 @@ public class P3dEngineEditor : Editor
     private SerializedProperty _sp_Renderer__gameWindow_Position;
     private SerializedProperty _sp_World_Camera__FOV;
 
-    private SerializedProperty _sp__settings_RendererSettings;
+    private SerializedProperty _sp__settings;
     private SerializedProperty _rsp__PixelsPerUnit;
     private SerializedProperty _rsp__UseSpriteRenderer;
 
@@ -47,17 +47,16 @@ public class P3dEngineEditor : Editor
             .FindPropertyRelative("<Camera>k__BackingField")
             .FindPropertyRelative("_FOV");
 
-        _sp__settings_RendererSettings =
+        _sp__settings =
             serializedObject
-            .FindProperty("_settings")
-            .FindPropertyRelative("<RendererSettings>k__BackingField");
+            .FindProperty("_settings");
 
         _rsp__PixelsPerUnit =
-            _sp__settings_RendererSettings
+            _sp__settings
             .FindPropertyRelative("_PixelsPerUnit");
 
         _rsp__UseSpriteRenderer =
-            _sp__settings_RendererSettings
+            _sp__settings
             .FindPropertyRelative("_UseSpriteRenderer");
 
         //PrintSerializedProperties();

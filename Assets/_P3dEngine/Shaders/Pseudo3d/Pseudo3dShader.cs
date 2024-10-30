@@ -16,7 +16,7 @@ namespace Assets._P3dEngine.Shaders
         Material _material;
         Camera _camera;
         Window _window;
-        RendererSettings _settings;
+        IRendererSettings _settings;
 
         Vector3 _cameraPosition;
         int     _cameraFov;
@@ -83,7 +83,7 @@ namespace Assets._P3dEngine.Shaders
             _material           = _data.Material;
             _window             = _data.Window;
             _camera             = _data.Camera;
-            _settings   = _data.RendererSettings;
+            _settings           = _data.RendererSettings;
 
             _mIdentity   = UnityEngine.Matrix4x4.identity;
             _mView       = UnityEngine.Matrix4x4.identity;

@@ -24,7 +24,7 @@ namespace Assets._P3dEngine.Shaders
         [NonSerialized]  public Material Material;
         [NonSerialized]  public Camera Camera;
         [NonSerialized]  public Window Window;
-        [NonSerialized]  public RendererSettings RendererSettings;
+        [NonSerialized]  public IRendererSettings RendererSettings;
         [SerializeField] public ProjectionMatrix ProjectionMatrix;
         [SerializeField] public bool GetGpuProjectionMatrix;
         [SerializeField] public bool ToRenderTexture;

@@ -330,14 +330,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _settings:
-    <ApplicationSettings>k__BackingField:
-      TargetFrameRate: -1
-    <GeneratorSettings>k__BackingField:
-      WorldUnitsPerUnit: 100
-      DrawDistance: 200
-    <RendererSettings>k__BackingField:
-      _PixelsPerUnit: 100
-      _UseSpriteRenderer: 1
+    _TargetFrameRate: -1
+    _WorldUnitsPerUnit: 100
+    _DrawDistance: 200
+    _PixelsPerUnit: 100
+    _UseSpriteRenderer: 1
   _prototypeMaterials:
     Cpu:
       RoadDark: {fileID: 2100000, guid: db7b8400b1a0d6f47a32ebc337873fb9, type: 2}

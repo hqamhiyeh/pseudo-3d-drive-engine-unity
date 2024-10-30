@@ -13,7 +13,7 @@ namespace Assets._P3dEngine
     [System.Serializable]
     internal class Generator
     {
-        private GeneratorSettings _settings;
+        private IGeneratorSettings _settings;
         private MeshBuilder _meshBuilder;
         private Mesh _mesh;
         private World _world;
@@ -25,7 +25,7 @@ namespace Assets._P3dEngine
             
         }
 
-        internal void SetSettings(GeneratorSettings settings)
+        internal void SetSettings(IGeneratorSettings settings)
         {
             _settings = settings;
         }
@@ -50,7 +50,7 @@ namespace Assets._P3dEngine
             _meshBuilder = new MeshBuilder(materialsCount);
         }
 
-        internal void Initialize(GeneratorSettings settings, int materialsCount)
+        internal void Initialize(IGeneratorSettings settings, int materialsCount)
         {
             SetSettings(settings);
             InitMeshBuilder(materialsCount);

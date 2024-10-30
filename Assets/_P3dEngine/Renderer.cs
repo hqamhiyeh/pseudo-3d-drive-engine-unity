@@ -26,7 +26,8 @@ namespace Assets._P3dEngine
             public UnityEngine.SpriteRenderer SpriteRenderer { get; set; }              
         }
 
-        private RendererSettings _settings;
+        private IRendererSettings _settings;
+        private delegate void SettingValueChangedEventHandler();
         [SerializeField] private UnityCamera _unityCamera;
         [SerializeField] private UnityDisplay _unityDisplay;
         [SerializeField] private Window _fullWindow;
@@ -40,7 +41,7 @@ namespace Assets._P3dEngine
 
         public Renderer() { }
 
-        public void Initialize(RendererSettings settings)
+        public void Initialize(IRendererSettings settings)
         {
             /* Get unity components */
             _unityCamera.Camera = _unityCamera.GameObject.GetComponent<UnityEngine.Camera>();
@@ -50,7 +51,7 @@ namespace Assets._P3dEngine
 
             /* Initialize settings */
             SetSettings(settings);
-            _settings.SettingChanged += RefreshSettings;
+            _settings.SettingValueChanged += RefreshSettings;
 
             /* Initialize components */
             InitSpriteRenderer();
@@ -69,11 +70,11 @@ namespace Assets._P3dEngine
         {
             if (_materials[0].shader.name == "Custom/Pseudo3d")
             {
-                Pseudo3dShaderData p3dsd = _p3dShaderData;
-                p3dsd.Material          = _materials[0];
-                p3dsd.Camera            = _world.Camera;
-                p3dsd.Window            = _gameWindow;
-                p3dsd.RendererSettings  = _settings;
+                Pseudo3dShaderData p3dsd    = _p3dShaderData;
+                p3dsd.Material              = _materials[0];
+                p3dsd.Camera                = _world.Camera;
+                p3dsd.Window                = _gameWindow;
+                p3dsd.RendererSettings      = _settings;
                 _shader = new Pseudo3dShader(p3dsd);
             }
         }
@@ -82,6 +83,8 @@ namespace Assets._P3dEngine
         {
             _shader?.SetUniforms();
         }
+
+        
 
         private void ApplySettings()
         {
@@ -96,7 +99,7 @@ namespace Assets._P3dEngine
             Debug.Log("[Renderer] INFO: Settings refreshed.");
         }
 
-        internal void SetSettings(RendererSettings settings)
+        internal void SetSettings(IRendererSettings settings)
         {
             _settings = settings;
             ApplySettings();
