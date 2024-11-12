@@ -1,3 +1,5 @@
+using Assets._P3dEngine.Interface;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
@@ -5,103 +7,79 @@ using UnityEngine;
 [CustomEditor(typeof(P3dEngine))]
 public class P3dEngineEditor : Editor
 {
-    /*
-     * sp   ->          serialized property
+    /*// Legend
+     *  sp  ->          serialized property
      * rsp  -> relative serialized property
-     * spv  ->          serialized property value
+     *  spv ->          serialized property value
      * sprv -> relative serialized property value
      */
 
     private IP3dEngineEditor _driveEngine;
-    private SerializedProperty _sp_Renderer;
-    private SerializedProperty _sp_Renderer__unityDisplay_GameObject;
-    private SerializedProperty _sp_Renderer__gameWindow_Position;
-    private SerializedProperty _sp_World_Camera__FOV;
 
-    private SerializedProperty _sp__settings;
-    private SerializedProperty _rsp__PixelsPerUnit;
-    private SerializedProperty _rsp__UseSpriteRenderer;
-
-    void OnEnable() {
+    void OnEnable()
+    {
         // Get 'DriveEngine' script component
         _driveEngine = (P3dEngine)serializedObject.targetObject;
 
-        // Get serialized properties
-        _sp_Renderer =
-            serializedObject
-            .FindProperty("_renderer");
-
-        _sp_Renderer__unityDisplay_GameObject =
-            _sp_Renderer
-            .FindPropertyRelative("_unityDisplay")
-            .FindPropertyRelative("<GameObject>k__BackingField");
-
-        _sp_Renderer__gameWindow_Position =
-            _sp_Renderer
-            .FindPropertyRelative("_gameWindow")
-            .FindPropertyRelative("<Position>k__BackingField");
-
-        _sp_World_Camera__FOV =
-            serializedObject
-            .FindProperty("<World>k__BackingField")
-            .FindPropertyRelative("<Camera>k__BackingField")
-            .FindPropertyRelative("_FOV");
-
-        _sp__settings =
-            serializedObject
-            .FindProperty("_settings");
-
-        _rsp__PixelsPerUnit =
-            _sp__settings
-            .FindPropertyRelative("_PixelsPerUnit");
-
-        _rsp__UseSpriteRenderer =
-            _sp__settings
-            .FindPropertyRelative("_UseSpriteRenderer");
-
-        //PrintSerializedProperties();
+        /*// Print Serialized Properties
+        //PrintSerializedPropertiesAll();
+        PrintSerializedPropertiesWatched();
+        */
     }
 
-    public override void OnInspectorGUI() {
+    public override void OnInspectorGUI()
+    {
+        Dictionary<string, object> _editorValues = new();
+        SerializedProperty sp;
+
         // Get values before change
-        int previous_World_Camera__FOV = _sp_World_Camera__FOV.intValue;
-        int previous__PixelsPerUnit = _rsp__PixelsPerUnit.intValue;
-        bool previous__UseSpriteRenderer = _rsp__UseSpriteRenderer.boolValue;
+        sp = GetFirstVisbleSerializedProperty();
+        while(sp.NextVisible(true)) /* skip 'm_Script' */
+            if (IsWatchedSerializedProperty(sp))
+                _editorValues.Add(sp.propertyPath, sp.boxedValue);
 
         // Make all the public and serialized fields visible in Inspector
         base.OnInspectorGUI();
 
-        // Load changed values
+        // Load new values
         serializedObject.Update();
 
-        // Get new values
-        Vector3 new__unityDisplay_GameObject_position = _sp_Renderer__unityDisplay_GameObject.objectReferenceValue != null ? ((GameObject)_sp_Renderer__unityDisplay_GameObject.objectReferenceValue).GetComponent<Transform>().position : Vector3.zero;
-
         // Check if values have changed
-        if (previous_World_Camera__FOV != _sp_World_Camera__FOV.intValue)
-        {
-            _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.Camera);
-        }
-        if (previous__PixelsPerUnit != _rsp__PixelsPerUnit.intValue)
-        {
-            _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.RendererSettings);
-        }
-        if (previous__UseSpriteRenderer != _rsp__UseSpriteRenderer.boolValue)
-        {
-            _driveEngine.ApplyEditorValues(IP3dEngineEditor.EditorValuesGroup.RendererSettings);
-        }
-        if (new__unityDisplay_GameObject_position != (Vector3)_sp_Renderer__gameWindow_Position.boxedValue)
-        {
-            _sp_Renderer__gameWindow_Position.boxedValue = new__unityDisplay_GameObject_position;
-        }
+        sp = GetFirstVisbleSerializedProperty();
+        while (sp.NextVisible(true)) /* skip 'm_Script' */
+            if (IsWatchedSerializedProperty(sp))
+                if (_editorValues.ContainsKey(sp.propertyPath))
+                    if (!sp.boxedValue.Equals(_editorValues[sp.propertyPath]))
+                        _driveEngine.ApplyEditorValue(sp.propertyPath, sp.boxedValue);
 
+        // Apply any pending property changes
         serializedObject.ApplyModifiedProperties();
     }
 
-    private void PrintSerializedProperties()
+    private SerializedProperty GetFirstVisbleSerializedProperty()
+    {
+        SerializedProperty it = serializedObject.GetIterator();
+        it.NextVisible(true);
+        return it;
+    }
+
+    private bool IsWatchedSerializedProperty(SerializedProperty sp)
+    {
+        return sp.name[0] == 'm' && sp.name[1] == '_' && sp.boxedValue.GetType().IsValueType;
+    }
+
+    private void PrintSerializedPropertiesAll()
     {
         SerializedProperty it = serializedObject.GetIterator();
         while(it.Next(true))
             Debug.Log(it.name);
+    }
+
+    private void PrintSerializedPropertiesWatched()
+    {
+        SerializedProperty sp = GetFirstVisbleSerializedProperty();
+        while(sp.NextVisible(true))
+            if (IsWatchedSerializedProperty(sp))
+                Debug.Log(sp.propertyPath);
     }
 }

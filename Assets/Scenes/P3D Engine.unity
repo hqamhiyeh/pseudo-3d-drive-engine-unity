@@ -330,11 +330,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _settings:
-    _TargetFrameRate: -1
-    _WorldUnitsPerUnit: 100
-    _DrawDistance: 200
-    _PixelsPerUnit: 100
-    _UseSpriteRenderer: 1
+    m_TargetFrameRate: -1
+    m_WorldUnitsPerUnit: 100
+    m_PixelsPerUnit: 100
+    m_UseSpriteRenderer: 0
+    m_DrawDistance: 200
   _prototypeMaterials:
     Cpu:
       RoadDark: {fileID: 2100000, guid: db7b8400b1a0d6f47a32ebc337873fb9, type: 2}
@@ -364,7 +364,7 @@ MonoBehaviour:
   <World>k__BackingField:
     <Camera>k__BackingField:
       _position: {x: 0, y: 300, z: 0}
-      _FOV: 60
+      m_FOV: 60
       <AspectRatio>k__BackingField: 1.778
 --- !u!1 &1593921111
 GameObject:

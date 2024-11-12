@@ -17,7 +17,7 @@ namespace Assets._P3dEngine
             [SerializeField] public Material RoadLight;
         }
 
-        [SerializeField] public CpuMaterials Cpu;
+        [SerializeField][Space(5)] public CpuMaterials Cpu;
 
         [System.Serializable]
         public class GpuMaterials
@@ -26,6 +26,6 @@ namespace Assets._P3dEngine
             [SerializeField] public Material CustomPseudo3d;
         }
 
-        [SerializeField] public GpuMaterials Gpu;
+        [SerializeField][Space(5)] public GpuMaterials Gpu;
     }
 }

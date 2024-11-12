@@ -1,35 +1,25 @@
 //#define PROJECT_MESH_WITH_CPU     // Calculate mesh projection with the CPU instead of GPU shaders
 
 using Assets._P3dEngine;
+using Assets._P3dEngine.Interface;
 using Assets._P3dEngine.Settings;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Runtime.CompilerServices;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 [assembly: InternalsVisibleTo("P3dEngineEditor")]
 
-internal interface IP3dEngineEditor
-{
-    enum EditorValuesGroup
-    {
-        All,
-        Camera,
-        RendererSettings
-    }
-
-    void ApplyEditorValues(EditorValuesGroup editorValuesGroup);
-}
-
 public class P3dEngine : MonoBehaviour, IP3dEngineEditor
 {
-    [SerializeField] private Settings _settings;
-    [SerializeField] private PrototypeMaterials _prototypeMaterials;
-    [SerializeField] private Generator _generator;
-    [SerializeField] private Assets._P3dEngine.Renderer _renderer;
+    [SerializeField][Space(05)] internal Settings _settings;
+    [SerializeField][Space(15)] private PrototypeMaterials _prototypeMaterials;
+    [SerializeField][Space(15)] private Generator _generator;
+    [SerializeField][Space(15)] private Assets._P3dEngine.Renderer _renderer;
     [field: SerializeField] internal World World { get; private set; }
     
     private Mesh _mesh;
@@ -129,11 +119,11 @@ public class P3dEngine : MonoBehaviour, IP3dEngineEditor
     {
         bool all = editorValuesGroup == IP3dEngineEditor.EditorValuesGroup.All;
 
+        if (all || editorValuesGroup == IP3dEngineEditor.EditorValuesGroup.Settings)
+            _settings.ApplyEditorValues();
+
         if (all || editorValuesGroup == IP3dEngineEditor.EditorValuesGroup.Camera)
             World.Camera.ApplyEditorValues();
-
-        if (all || editorValuesGroup == IP3dEngineEditor.EditorValuesGroup.RendererSettings)
-            _settings.ApplyEditorValues();
     }
 }
 

@@ -51,10 +51,27 @@ namespace Assets._P3dEngine
 
             /* Initialize settings */
             SetSettings(settings);
-            _settings.SettingValueChanged += RefreshSettings;
+            _settings.SettingChanged += SettingChangedEventHandler;
 
             /* Initialize components */
             InitSpriteRenderer();
+        }
+
+        private void SettingChangedEventHandler(object sender, SettingChangedEventArgs e)
+        {
+            switch (e.SettingName)
+            {
+                case nameof(IRendererSettings.PixelsPerUnit):
+                    {
+                        RefreshSettings();
+                        break;
+                    }
+                case nameof(IRendererSettings.UseSpriteRenderer):
+                    {
+                        RefreshSettings();
+                        break;
+                    }
+            }
         }
 
         private void InitSpriteRenderer()
@@ -83,8 +100,6 @@ namespace Assets._P3dEngine
         {
             _shader?.SetUniforms();
         }
-
-        
 
         private void ApplySettings()
         {

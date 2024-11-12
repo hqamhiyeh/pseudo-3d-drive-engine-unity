@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Assets._P3dEngine.Settings
 {
-    internal interface ISettingsEventsPublisher
+    internal interface IRaiseSettingChangedEvent
     {
 #nullable enable
-        event Action? SettingValueChanged;
+        event EventHandler<SettingChangedEventArgs>? SettingChanged;
 #nullable disable
     }
 }

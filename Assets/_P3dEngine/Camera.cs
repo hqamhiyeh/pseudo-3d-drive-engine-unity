@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets._P3dEngine.Interface;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ using UnityEngine;
 namespace Assets._P3dEngine
 {
     [System.Serializable]
-    internal class Camera
+    internal class Camera : IApplyEditorValues
     {
         private const float DEFAULT_CAMERA_HEIGHT   = 300.0f;
         private const int   DEFAULT_CAMERA_FOV      = 60;
@@ -16,9 +17,8 @@ namespace Assets._P3dEngine
 
         [SerializeField] private Vector3 _position;
         private int _fov;
-        [SerializeField] private int _FOV;  // For unity inspector
+        [SerializeField] private int m_FOV;  // For unity inspector
         private float _focalLength;
-        
 
         public Camera()
         {
@@ -36,7 +36,7 @@ namespace Assets._P3dEngine
                 if (value <= 0 || value >= 180)
                     throw new ArgumentOutOfRangeException(nameof(FOV), "FOV must be greater than 0 and less than 180.");
                 
-                _fov = value;
+                m_FOV = _fov = value;
                 CalculateFocalLength();
             }
         }
@@ -50,7 +50,7 @@ namespace Assets._P3dEngine
 
         public void ApplyEditorValues()
         {
-            FOV = _FOV;
+            FOV = m_FOV;
         }
     }
 }

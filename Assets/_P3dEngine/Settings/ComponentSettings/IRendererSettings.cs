@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Assets._P3dEngine.Settings
 {
-    internal interface IGeneratorSettings : ISettingsEventsPublisher
+    internal interface IRendererSettings : IRaiseSettingChangedEvent
     {
-        int WorldUnitsPerUnit { get; }
-        int DrawDistance { get; }
+        int PixelsPerUnit { get; }
+        bool UseSpriteRenderer { get; }
     }
 }
