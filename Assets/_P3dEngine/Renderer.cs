@@ -27,7 +27,6 @@ namespace Assets._P3dEngine
         }
 
         private IRendererSettings _settings;
-        private delegate void SettingValueChangedEventHandler();
         [SerializeField] private UnityCamera _unityCamera;
         [SerializeField] private UnityDisplay _unityDisplay;
         [SerializeField] private Window _fullWindow;
@@ -43,35 +42,17 @@ namespace Assets._P3dEngine
 
         public void Initialize(IRendererSettings settings)
         {
-            /* Get unity components */
+            GetUnityComponents();
+            SetSettings(settings);
+            InitSpriteRenderer();
+        }
+
+        private void GetUnityComponents()
+        {
             _unityCamera.Camera = _unityCamera.GameObject.GetComponent<UnityEngine.Camera>();
             _unityDisplay.MeshFilter = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.MeshFilter>();
             _unityDisplay.MeshRenderer = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.MeshRenderer>();
             _unityDisplay.SpriteRenderer = _unityDisplay.GameObject.GetComponentInChildren<UnityEngine.SpriteRenderer>();
-
-            /* Initialize settings */
-            SetSettings(settings);
-            _settings.SettingChanged += SettingChangedEventHandler;
-
-            /* Initialize components */
-            InitSpriteRenderer();
-        }
-
-        private void SettingChangedEventHandler(object sender, SettingChangedEventArgs e)
-        {
-            switch (e.SettingName)
-            {
-                case nameof(IRendererSettings.PixelsPerUnit):
-                    {
-                        RefreshSettings();
-                        break;
-                    }
-                case nameof(IRendererSettings.UseSpriteRenderer):
-                    {
-                        RefreshSettings();
-                        break;
-                    }
-            }
         }
 
         private void InitSpriteRenderer()
@@ -83,41 +64,11 @@ namespace Assets._P3dEngine
             _unityDisplay.SpriteRenderer.sprite = roadPlaneSprite;
         }
 
-        internal void OnStart()
-        {
-            if (_materials[0].shader.name == "Custom/Pseudo3d")
-            {
-                Pseudo3dShaderData p3dsd    = _p3dShaderData;
-                p3dsd.Material              = _materials[0];
-                p3dsd.Camera                = _world.Camera;
-                p3dsd.Window                = _gameWindow;
-                p3dsd.RendererSettings      = _settings;
-                _shader = new Pseudo3dShader(p3dsd);
-            }
-        }
-
-        internal void UpdateShaderUniforms()
-        {
-            _shader?.SetUniforms();
-        }
-
-        private void ApplySettings()
-        {
-            _unityCamera.Camera.orthographicSize = (float)_fullWindow.Height / (float)_settings.PixelsPerUnit / 2.0f;
-            _unityDisplay.MeshRenderer.enabled = !_settings.UseSpriteRenderer;
-            _unityDisplay.SpriteRenderer.enabled = _settings.UseSpriteRenderer;
-        }
-        
-        private void RefreshSettings()
-        {
-            ApplySettings();
-            Debug.Log("[Renderer] INFO: Settings refreshed.");
-        }
-
         internal void SetSettings(IRendererSettings settings)
         {
             _settings = settings;
-            ApplySettings();
+            _settings.SettingChanged += SettingChangedEventHandler;
+            ApplySettings("all");
         }
 
         internal void SetMaterials(List<Material> materials)
@@ -135,6 +86,24 @@ namespace Assets._P3dEngine
         internal void SetWorld(World world)
         {
             _world = world;
+        }
+
+        internal void OnStart()
+        {
+            if (_materials[0].shader.name == "Custom/Pseudo3d")
+            {
+                Pseudo3dShaderData p3dsd    = _p3dShaderData;
+                p3dsd.Material              = _materials[0];
+                p3dsd.Camera                = _world.Camera;
+                p3dsd.Window                = _gameWindow;
+                p3dsd.RendererSettings      = _settings;
+                _shader = new Pseudo3dShader(p3dsd);
+            }
+        }
+        
+        internal void UpdateShaderUniforms()
+        {
+            _shader?.SetUniforms();
         }
 
         internal void DrawToSprite()
@@ -158,6 +127,37 @@ namespace Assets._P3dEngine
             GL.PopMatrix();
             Graphics.SetRenderTarget(saveActiveRenderTexture);
             RenderTexture.ReleaseTemporary(renderTexture);
+        }
+
+        private void SetUnityCameraOrthographicSize()
+        {
+            _unityCamera.Camera.orthographicSize = (float)_fullWindow.Height / (float)_settings.PixelsPerUnit / 2.0f;
+        }
+
+        private void SetActiveUnityDisplayRenderer()
+        {
+            _unityDisplay.MeshRenderer.enabled = !_settings.UseSpriteRenderer;
+            _unityDisplay.SpriteRenderer.enabled = _settings.UseSpriteRenderer;
+        }
+
+        private void ApplySettings(string settingName)
+        {
+            bool all = settingName.ToLower() == "all";
+            
+            if ( all || settingName == nameof(IRendererSettings.PixelsPerUnit) )
+            {
+                SetUnityCameraOrthographicSize();
+            }
+
+            if ( all || settingName == nameof(IRendererSettings.UseSpriteRenderer) )
+            {
+                SetActiveUnityDisplayRenderer();
+            }
+        }
+
+        private void SettingChangedEventHandler(object sender, SettingChangedEventArgs e)
+        {
+            ApplySettings(e.SettingName);
         }
     }
 }
