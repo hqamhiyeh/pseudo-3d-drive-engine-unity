@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Assets._P3dEngine
 {
     [System.Serializable]
-    internal class Window
+    internal class RenderWindow
     {
         [field: SerializeField] public Vector3 Position { get; set; }                           // Position of screen in Unity (automatically set based on selected Unity Renderers)
         [field: SerializeField] public int Width { get; set; }                                  // Screen width in pixels

@@ -9,27 +9,36 @@ using UnityEngine;
 namespace Assets._P3dEngine.Settings
 {
     [System.Serializable]
-    internal class Settings : IApplyEditorValues, IApplicationSettings, IGeneratorSettings, IRendererSettings
+    internal class EngineSettings : IApplyEditorValues, IApplicationSettings, IRendererSettings
     {
 #nullable enable
         public event EventHandler<SettingChangedEventArgs>? SettingChanged;
 #nullable disable
 
-        private int     _targetFrameRate        = -1;
-        private int     _worldUnitsPerUnit      = 100;
-        private int     _pixelsPerUnit          = 100;
-        private bool    _useSpriteRenderer      = true;
-        private int     _drawDistance           = 200;
+        private const int   DEFAULT_TargetFrameRate     = -1;
+        private const int   DEFAULT_WorldUnitsPerUnit   = 100;
+        private const int   DEFAULT_PixelsPerUnit       = 100;
+        private const bool  DEFAULT_UseSpriteRenderer   = true;
+        private const int   DEFAULT_DrawDistance        = 200;
+
+        private int     _targetFrameRate                        = DEFAULT_TargetFrameRate;
+        private int     _worldUnitsPerUnit                      = DEFAULT_WorldUnitsPerUnit;
+        private int     _pixelsPerUnit                          = DEFAULT_PixelsPerUnit;
+        private bool    _useSpriteRenderer                      = DEFAULT_UseSpriteRenderer;
+        private int     _drawDistance                           = DEFAULT_DrawDistance;      
         
+        /*
+         * Editor Values
+         */
         [Header("Application Settings")][Space(5)]
-        [SerializeField] private int    m_TargetFrameRate;
+        [SerializeField] private int    m_TargetFrameRate       = DEFAULT_TargetFrameRate;
 
         [Space(5)]
         [Header("Render Settings")][Space(5)]
-        [SerializeField] private int    m_WorldUnitsPerUnit;
-        [SerializeField] private int    m_PixelsPerUnit;
-        [SerializeField] private bool   m_UseSpriteRenderer;
-        [SerializeField] private int    m_DrawDistance;
+        [SerializeField] private int    m_WorldUnitsPerUnit     = DEFAULT_WorldUnitsPerUnit;
+        [SerializeField] private int    m_PixelsPerUnit         = DEFAULT_PixelsPerUnit;
+        [SerializeField] private bool   m_UseSpriteRenderer     = DEFAULT_UseSpriteRenderer;
+        [SerializeField] private int    m_DrawDistance          = DEFAULT_DrawDistance;
         
         public int  TargetFrameRate     { get => _targetFrameRate;      set { m_TargetFrameRate      = _targetFrameRate      = value;   RaiseSettingChangedEvent( nameof(TargetFrameRate)   );  } }
         public int  WorldUnitsPerUnit   { get => _worldUnitsPerUnit;    set { m_WorldUnitsPerUnit    = _worldUnitsPerUnit    = value;   RaiseSettingChangedEvent( nameof(WorldUnitsPerUnit) );  } }
@@ -49,6 +58,11 @@ namespace Assets._P3dEngine.Settings
             PixelsPerUnit       = m_PixelsPerUnit;
             UseSpriteRenderer   = m_UseSpriteRenderer;
             DrawDistance        = m_DrawDistance;
+        }
+
+        public static EngineSettings GetNewDefaultSettings()
+        {
+            return new EngineSettings();
         }
 
     }

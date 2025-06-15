@@ -12,10 +12,11 @@ namespace Assets._P3dEngine.Shaders
     internal class Pseudo3dShader : IShader
     {
         readonly Pseudo3dShaderData _data;
+        readonly Pseudo3dShaderConfig _config;
 
         Material _material;
         Camera _camera;
-        Window _window;
+        RenderWindow _window;
         IRendererSettings _settings;
 
         Vector3 _cameraPosition;
@@ -34,7 +35,7 @@ namespace Assets._P3dEngine.Shaders
         bool _getGpuProjectionMatrix        = true;
         bool _toRenderTexture               = false;
         bool _enableProjectionTransform     = true;
-        bool _enableScreenTransform       = true;
+        bool _enableScreenTransform         = true;
 
         // Transformation matrices
         UnityEngine.Matrix4x4 _mIdentity;
@@ -72,9 +73,10 @@ namespace Assets._P3dEngine.Shaders
         UnityEngine.FrustumPlanes fp;
         */
 
-        public Pseudo3dShader(Pseudo3dShaderData shaderData)
+        public Pseudo3dShader(Pseudo3dShaderData shaderData, Pseudo3dShaderConfig shaderConfig)
         {
             _data = shaderData;
+            _config = shaderConfig;
             Initialize();
         }
 
@@ -119,11 +121,11 @@ namespace Assets._P3dEngine.Shaders
             _windowAspectRatio          = _window.AspectRatio;
             _settingsPixelsPerUnit      = _settings.PixelsPerUnit;
             _settingsUseSpriteRenderer  = _settings.UseSpriteRenderer;
-            _projectionMatrix           = _data.ProjectionMatrix;
-            _getGpuProjectionMatrix     = _data.GetGpuProjectionMatrix;
-            _toRenderTexture            = _data.ToRenderTexture;
-            _enableProjectionTransform  = _data.EnableProjectionTransform;
-            _enableScreenTransform      = _data.EnableViewportTransform;
+            _projectionMatrix           = _config.ProjectionMatrix;
+            _getGpuProjectionMatrix     = _config.GetGpuProjectionMatrix;
+            _toRenderTexture            = _config.ToRenderTexture;
+            _enableProjectionTransform  = _config.EnableProjectionTransform;
+            _enableScreenTransform      = _config.EnableViewportTransform;
 
             // View Matrix
             cameraX = _cameraPosition.x / 100.0f;
@@ -162,6 +164,10 @@ namespace Assets._P3dEngine.Shaders
 
             switch(_projectionMatrix)
             {
+                case ProjectionMatrix.@default:
+                {
+                    goto case ProjectionMatrix.perspective_unity_flip;
+                }
                 case ProjectionMatrix.perspective_unity:
                 {
                     _mProjection = UnityEngine.Matrix4x4.identity;

@@ -50,8 +50,12 @@ namespace Assets._P3dEngine
                 return triangles;
             }
         }
+        public int SubmeshCount { get => _triangles.Count; }
 
-        public Vector3 GetVertex(int verticesIndex) { return _vertices[verticesIndex]; }
+        public Vector3 GetVertex(int verticesIndex)
+        {
+            return _vertices[verticesIndex];
+        }
 
         public void AddSubmesh()
         {
@@ -68,9 +72,12 @@ namespace Assets._P3dEngine
 
         public void SetSubmeshCount(int newSubmeshCount)
         {
-            int submeshCount = _triangles.Count;
+            int submeshCount = SubmeshCount;
 
-            if (submeshCount < newSubmeshCount)
+            if (submeshCount == newSubmeshCount)
+                return;
+
+            else if (submeshCount < newSubmeshCount)
                 for (int i = 0; i < (newSubmeshCount - submeshCount); i++)
                     AddSubmesh();
 

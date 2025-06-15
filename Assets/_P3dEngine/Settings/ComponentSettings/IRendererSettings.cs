@@ -8,7 +8,9 @@ namespace Assets._P3dEngine.Settings
 {
     internal interface IRendererSettings : IRaiseSettingChangedEvent
     {
+        int WorldUnitsPerUnit { get; }
         int PixelsPerUnit { get; }
         bool UseSpriteRenderer { get; }
+        int DrawDistance { get; }
     }
 }
